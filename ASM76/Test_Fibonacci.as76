@@ -1,0 +1,29 @@
+# This program is simple enough that probably doesn't need memory variables, only registers...
+DATI	0x1 $4
+DATI	0x1 $8
+# Loop target
+DATI	0x20 $16
+# Loop current
+DATI	0x0 $20
+# Loop inc
+DATI	0x1 $24
+
+[fi]
+# Print the number
+SLIA	0x100 $4
+INTX	0x5 0x100
+# Calc new
+MVRI	$8 $12
+ADDI	$8 $4
+# New to old
+MVRI	$12 $4
+# Accumulator & loop
+ADDI	$20 $24
+CMPI	$20 $16
+JIEA	[end]
+JMPA	[fi]
+
+[end]
+HALT
+
+# EOF
