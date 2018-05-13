@@ -71,7 +71,8 @@ int main(int argc, char** argv) {
 		sprintf(obj_file, "%s.obj", src_file);
 		ObjectCode::write_file(obj_file, p);
 	} else {
-		printf("VM compiler. VM/76 with BIOS version 'Still in Alpha'\nUsage: $./VMc [src]\n");
+		puts("VM compiler. VM/76 with BIOS version 'Still in Alpha'");
+		puts("Usage: $./VMc [src]");
 	}
 
 	return 0;
