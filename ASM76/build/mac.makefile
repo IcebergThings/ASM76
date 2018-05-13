@@ -16,6 +16,10 @@ test: VMtest.cxx $(TARGET)
 	$(CCLD) -flto VMtest.o ./libASM76.dylib -lstdc++ -m -o VMtest
 	./VMtest
 
+VMenv: VMexec.cxx $(TARGET)
+	$(CXX) -c VMexec.cxx -o VMexec.o $(CXXFLAGS)
+	$(CCLD) VMexec.o ./libASM76.so -lstdc++ -flto -lm -o VMexec
+
 clean:
 	rm -f $(OBJECTS) $(TARGET) VMtest
 

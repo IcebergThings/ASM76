@@ -15,4 +15,7 @@ test: VMtest.cxx $(TARGET)
 	$(CXX) $^ -o VMtest.exe $(CXXFLAGS) $(TARGET)
 	VMtest.exe
 
+VMenv: VMexec.cxx $(TARGET)
+	$(CXX) $^ -o VMexec.exe $(CXXFLAGS) $(TARGET)
+
 .PHONY: test
