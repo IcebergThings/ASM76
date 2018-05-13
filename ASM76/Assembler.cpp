@@ -37,6 +37,15 @@ namespace ASM76 {
 			prg = strchr(prg, '\n') + 1;
 			ensure_prg();
 			break;
+		case '*':
+			prg++;
+			while (*prg != '\n' && *prg) {
+				size++;
+				prg++;
+			}
+			size++; // reserve space for 0x00
+			skip('\n');
+			break;
 		default:
 			size += sizeof(Instruct);
 			prg = strchr(prg, '\n') + 1;
@@ -56,6 +65,15 @@ namespace ASM76 {
 			break;
 		case '\n':
 			prg++;
+			break;
+		case '*':
+			prg++;
+			while (*prg && *prg != '\n') {
+				instructs.push(*prg);
+				prg++;
+			}
+			instructs.push(0x00);
+			skip('\n');
 			break;
 		default:
 			Instruct i;

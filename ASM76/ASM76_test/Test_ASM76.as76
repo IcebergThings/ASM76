@@ -11,6 +11,11 @@ DATB	0x56 $0
 SLBA	0x1000 $0
 INTX	0x2 0x1000
 
+# Test for unaligned data
+JMPA [startp]
+*WOW
+[startp]
+
 # Display a \n
 DATB	0xA $0
 SLBA	0x1000 $0
@@ -23,10 +28,6 @@ HALT
 
 # Data section at the end
 [HelloWorld_Str]
-# Hello World!\n
-RAWD 0x6548 0x206F 0x6C6C 0x6C72 0x6F57
-RAWD 0x2164 0x0000 0x000A 0x0000 0x0000
-# Due to Little-Endien
-# The RAWD data sequence is RAWD B1B0 B5B4 B3B2 B10B9 B8B7
+*Hello World!
 
 # EOF

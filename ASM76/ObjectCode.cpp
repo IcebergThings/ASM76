@@ -25,10 +25,8 @@ namespace ASM76 { namespace ObjectCode {
 		}
 		r.size = f.read_u32();
 		r.instruct = (Instruct*) malloc(r.size);
-		for (size_t i = 0; i < r.size / sizeof(Instruct); i++) {
-			r.instruct[i].opcode = f.read_u16();
-			r.instruct[i].a = f.read_u32();
-			r.instruct[i].b = f.read_u32();
+		for (size_t i = 0; i < r.size; i++) {
+			((uint8_t*)r.instruct)[i] = f.read_u8();
 		}
 		return r;
 	}
@@ -36,10 +34,8 @@ namespace ASM76 { namespace ObjectCode {
 		V::BinaryFileWriter f(filename);
 		f.write_u64(magic);
 		f.write_u32(program.size);
-		for (size_t i = 0; i < program.size / sizeof(Instruct); i++) {
-			f.write_u16(program.instruct[i].opcode);
-			f.write_u32(program.instruct[i].a);
-			f.write_u32(program.instruct[i].b);
+		for (size_t i = 0; i < program.size; i++) {
+			f.write_u8(((uint8_t*)program.instruct)[i]);
 		}
 		return true;
 	}
