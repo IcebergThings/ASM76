@@ -43,7 +43,6 @@ namespace ASM76 {
 			prg++;
 			break;
 		default:
-			printf("%x\n", size);
 			size += sizeof(Instruct);
 			prg = strchr(prg, '\n') + 1;
 		}
