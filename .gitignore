@@ -1,0 +1,27 @@
+#==============================================================================
+# ■ .gitignore
+#==============================================================================
+
+# output files
+*.lib
+*.a
+*.o
+*.dylib
+*.so
+*.dll
+*.exe
+ASM76/VMtest
+ASM76/VMexec
+ASM76/VMc
+
+# personal configurations for paths etc.
+*/build/windows_flags.txt
+*/build/windows_libs.txt
+windows_path.bat
+
+# mysterious onepiece
+one.cxx
+
+# awesome data
+output.log
+*.obj
