@@ -68,6 +68,7 @@ namespace ASM76 {
 		Program assemble();
 	private:
 		void error(const char* message);
+		void ensure_prg();
 		bool check(char c, const char* s);
 		void skip(char);
 		void skip(const char* s, const char* error_msg);

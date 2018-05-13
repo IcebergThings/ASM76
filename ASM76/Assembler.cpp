@@ -19,7 +19,6 @@ namespace ASM76 {
 	void Assembler::scan() {
 		uint32_t size = 0x0;
 		while (prg && *prg) switch (*prg) {
-			puts(prg);
 		case '[': {
 			prg++;
 			char* tagname = new char[MAX_TAG_NAME_SIZE];
@@ -27,7 +26,7 @@ namespace ASM76 {
 			Tag tag;
 			tag.name = tagname;
 			tag.pointer = size;
-			printf("TAG %s : %x\n", tag.name, tag.pointer);
+			printf("Tag '%s': 0x%x\n", tag.name, tag.pointer);
 			tags.push(tag);
 			break;
 		}
@@ -35,16 +34,13 @@ namespace ASM76 {
 			prg++;
 			break;
 		case '#':
-			prg = strchr(prg, '\n');
-			if (!prg) {
-				prg = "(no source)\n";
-				error("unexpected EOF: please add a newline at the end");
-			}
-			prg++;
+			prg = strchr(prg, '\n') + 1;
+			ensure_prg();
 			break;
 		default:
 			size += sizeof(Instruct);
 			prg = strchr(prg, '\n') + 1;
+			ensure_prg();
 		}
 		prg = original_prg;
 	}
@@ -92,18 +88,32 @@ namespace ASM76 {
 		// spp = start of printed program
 		while (p > original_prg && p[-1] != '\n') p--;
 		const char* spp = p;
-		while (!check(*p, "\n")) {
-			char c = *p++;
-			if (c == '\t') c = ' ';
-			putchar(c);
+		if (p) {
+			while (!check(*p, "\n")) {
+				char c = *p++;
+				if (c == '\t') c = ' ';
+				putchar(c);
+			}
+			putchar('\n');
+		} else {
+			puts("(no source)");
 		}
-		putchar('\n');
 		// print the caret
 		int loc = prg - spp;
 		while (loc--) putchar(' ');
 		puts("^");
 		// exit gracefully
 		abort();
+	}
+	//-------------------------------------------------------------------------
+	// ● 检查prg是不是跑飞了
+	//-------------------------------------------------------------------------
+	void Assembler::ensure_prg() {
+		if (prg < original_prg) {
+			prg = NULL;
+			error("My caret disappeared while assembling. "
+				"Probably you are missing a newline at the end of your file.");
+		}
 	}
 	//-------------------------------------------------------------------------
 	// ● 是否为某些字符中的一个？

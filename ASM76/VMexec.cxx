@@ -39,15 +39,15 @@ static uint32_t bios_call_putl(uint8_t* input) {
 }
 
 BIOS* load_bios() {
-	BIOS b(5);
-	b.function_table[1] = &test_bios_call;
-	b.function_table[2] = &bios_call_putc;
-	b.function_table[3] = &bios_call_puts;
-	b.function_table[4] = &bios_call_putb;
-	b.function_table[5] = &bios_call_puti;
-	b.function_table[6] = &bios_call_putl;
+	BIOS* b = new BIOS(5);
+	b->function_table[1] = &test_bios_call;
+	b->function_table[2] = &bios_call_putc;
+	b->function_table[3] = &bios_call_puts;
+	b->function_table[4] = &bios_call_putb;
+	b->function_table[5] = &bios_call_puti;
+	b->function_table[6] = &bios_call_putl;
 
-	return &b;
+	return b;
 }
 
 int main(int argc, char** argv) {
@@ -61,7 +61,8 @@ int main(int argc, char** argv) {
 
 		VMterminate();
 	} else {
-		printf("VM exec. VM/76 with BIOS version 'Still in Alpha'\nUsage: $./VMexec [obj_code]");
+		puts("VM exec. VM/76 with BIOS version 'Still in Alpha'");
+		puts("Usage: $ ./VMexec [obj_code]");
 	}
 
 	return 0;
