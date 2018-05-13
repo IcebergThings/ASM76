@@ -194,7 +194,7 @@ namespace ASM76 {
 	void Assembler::read_parameters(Instruct* i) {
 		switch (i->opcode) {
 		#define TNUL 0
-		#define TIMM read_immediate_u32()
+		#define TIMM read_address()
 		#define TADD read_address()
 		#define TREG read_register()
 		#define I(x, ta, tb) case x: i->a = ta; i->b = tb; break;
