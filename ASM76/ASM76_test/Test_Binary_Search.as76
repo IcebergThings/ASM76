@@ -1,0 +1,45 @@
+# Search target
+DATB	0x8 $4
+# Mid index $8
+# Left index
+DATB	0x0 $28
+# Right index
+DATB	0xA $32
+# Array start point
+DATI	[ARRAY] $12
+# Array pointer: $16
+# Div by 2
+DATB	0x2 $24
+
+[loop]
+# Calculate mid
+MVRB	$32 $8
+MINB	$8 $28
+DIVB	$8 $24
+ADDB	$8 $28
+# Array fetch
+MVRB	$12 $16
+ADDI	$16 $8
+LDBR	$16 $20
+# Compare & go
+CMPB	$20 $4
+JIEA	[end]
+JIGA	[larger]
+[smaller]
+MVRB	$8 $28
+JMPA	[loop]
+[larger]
+MVRB	$8 $32
+JMPA	[loop]
+
+[end]
+SLIA	0x100 $8
+INTX	0x4 0x100
+HALT
+
+# Data after HALT
+[ARRAY]
+RAWD	0x0100 0x0504 0x0302 0x0908 0x0706
+# B1B0 B5B4 B3B2 B10B9 B8B7
+
+# EOF
