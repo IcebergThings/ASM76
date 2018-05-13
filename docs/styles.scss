@@ -1,0 +1,147 @@
+---
+---
+
+@charset "utf-8";
+@import "highlight";
+
+@charset "utf-8";
+
+@mixin reset {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+
+* {
+	@include reset;
+}
+
+table {
+	border-collapse: collapse;
+	th, td {
+		border: .1em solid currentcolor;
+	}
+}
+
+body {
+	padding: .75em;
+	background-color: darkgreen;
+	background-image: linear-gradient(green, darkgreen);
+	background-repeat: no-repeat;
+}
+
+::selection {
+	color: white;
+	background-color: orange;
+	text-shadow: none;
+}
+
+.center {
+	&, & * {
+		text-align: center;
+	}
+}
+
+.metadata {
+	font-size: smaller;
+	font-style: italic;
+	color: gray;
+}
+
+main {
+	font-family: "FreeSans", sans-serif;
+	font-size: 14pt;
+	font-kerning: normal;
+	font-variant-ligatures: normal;
+	background-color: white;
+	margin: 1.5em;
+	padding: 2em 4em;
+	color: #424242;
+	box-shadow: 0 0 .5em .5em rgba(255, 255, 255, .5);
+
+	* {
+		font-size: inherit;
+	}
+
+	h1 {
+		font-size: 32pt;
+		text-align: center;
+		margin: 0 1em .5em;
+		&:not(:first-child) {
+			margin-top: 1em;
+		}
+	}
+
+	h2 {
+		font-size: 24pt;
+		border-top: .2em double lightgray;
+		padding-top: .3em;
+	}
+
+	h3 {
+		font-size: 18pt;
+		font-weight: normal;
+		margin-top: .3em;
+		border-top: .1em solid lightgray;
+		padding-top: .3em;
+	}
+
+	h4 {
+		font-size: 15pt;
+		margin-top: .3em;
+		padding-top: .3em;
+	}
+
+	big, small, sub, sup {
+		font-size: initial;
+	}
+
+	a {
+		$anchor-color: deepskyblue;
+		color: $anchor-color;
+		text-decoration: none;
+		&:hover, &:active {
+			background-color: lighten($anchor-color, 40%);
+			outline: .1em solid currentcolor;
+			outline-offset: .1em;
+		}
+		&:active {
+			color: darken($anchor-color, 15%);
+			background-color: lighten($anchor-color, 30%);
+		}
+	}
+
+	p, ol, ul, pre, table {
+		margin: .8em 0;
+	}
+
+	table.center {
+		margin-left: auto;
+		margin-right: auto;
+	}
+
+	ol, ul {
+		margin: .8em 0 .8em 1em;
+		ol, ul {
+			margin: 0 0 0 2em;
+		}
+	}
+
+	pre {
+		margin-left: 2em;
+		margin-right: 2em;
+		border: .1em solid lightgray;
+		padding: .8em;
+		background-color: #f8f8f8;
+	}
+
+	pre, code, tt, samp {
+		font-family: monospace;
+	}
+
+	table {
+		th, td {
+			padding: .25em .5em;
+		}
+	}
+}

@@ -1,0 +1,30 @@
+# site settings
+title: ASM76
+description: >
+  Lacking description.
+baseurl: "/ASM76"
+url: "https://icebergthings.github.io"
+permalink: /blog/:categories/:title.html
+timezone: Asia/Shanghai
+
+# something extra
+liquid:
+  error_mode: warn
+markdown: kramdown
+kramdown:
+  input: GFM
+  hard_wrap: true
+  auto_ids: true
+  entity_output: as_input
+  smart_quotes:
+    # ‘’“”
+    # 我们不需要“智能”引号，自己就可以输入。
+    - apos
+    - apos
+    - quot
+    - quot
+sass:
+  style: compressed
+
+# ‘serve’ command options
+port: 8076

@@ -13,6 +13,8 @@
 ASM76/VMtest
 ASM76/VMexec
 ASM76/VMc
+docs/.sass-cache/
+docs/_site/
 
 # personal configurations for paths etc.
 */build/windows_flags.txt
