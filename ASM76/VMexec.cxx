@@ -13,9 +13,21 @@ static uint32_t test_bios_call(uint8_t* input) {
 	return 0x89ABCDEF;
 }
 
+static uint32_t bios_call_putc(uint8_t* input) {
+	putchar(*((char*) input));
+	return 0x0;
+}
+
+static uint32_t bios_call_puts(uint8_t* input) {
+	puts((char*) input);
+	return 0x0;
+}
+
 BIOS* load_bios() {
 	BIOS b(5);
 	b.function_table[1] = &test_bios_call;
+	b.function_table[2] = &bios_call_putc;
+	b.function_table[3] = &bios_call_puts;
 
 	return &b;
 }
@@ -27,7 +39,7 @@ int main(int argc, char** argv) {
 		Program p = ObjectCode::read_file(argv[1]);
 		VM v(p);
 		v.firmware = load_bios();
-		v.execute(true);
+		v.execute(false);
 
 		VMterminate();
 	} else {

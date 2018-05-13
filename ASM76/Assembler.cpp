@@ -19,6 +19,7 @@ namespace ASM76 {
 	void Assembler::scan() {
 		uint32_t size = 0x0;
 		while (prg && *prg) switch (*prg) {
+			puts(prg);
 		case '[': {
 			prg++;
 			char* tagname = new char[MAX_TAG_NAME_SIZE];
@@ -26,12 +27,13 @@ namespace ASM76 {
 			Tag tag;
 			tag.name = tagname;
 			tag.pointer = size;
+			printf("TAG %s : %x\n", tag.name, tag.pointer);
 			tags.push(tag);
 			break;
 		}
-		default:
-			size += sizeof(Instruct);
-			[[fallthrough]];
+		case '\n':
+			prg++;
+			break;
 		case '#':
 			prg = strchr(prg, '\n');
 			if (!prg) {
@@ -40,6 +42,10 @@ namespace ASM76 {
 			}
 			prg++;
 			break;
+		default:
+			printf("%x\n", size);
+			size += sizeof(Instruct);
+			prg = strchr(prg, '\n') + 1;
 		}
 		prg = original_prg;
 	}
