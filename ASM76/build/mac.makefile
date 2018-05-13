@@ -7,9 +7,8 @@ TARGET = libASM76.dylib
 include ../inc.makefile
 include ../routine.makefile
 
-LDLIBS += $(shell pkg-config --libs --static glm)
 LDFLAGS += -shared
-CXXFLAGS += -I.. $(shell pkg-config --cflags glm) -fPIC
+CXXFLAGS += -I.. -fPIC
 
 test: VMtest.cxx $(TARGET)
 	$(CXX) -c VMtest.cxx -o VMtest.o $(CXXFLAGS)
