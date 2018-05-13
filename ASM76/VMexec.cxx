@@ -39,7 +39,7 @@ static uint32_t bios_call_putl(uint8_t* input) {
 }
 
 BIOS* load_bios() {
-	BIOS* b = new BIOS(5);
+	BIOS* b = new BIOS(7);
 	b->function_table[1] = &test_bios_call;
 	b->function_table[2] = &bios_call_putc;
 	b->function_table[3] = &bios_call_puts;
