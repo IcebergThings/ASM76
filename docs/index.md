@@ -1,5 +1,6 @@
 ---
 layout: default
+title: ASM76
 ---
 
 This is the official site of ASM76.
