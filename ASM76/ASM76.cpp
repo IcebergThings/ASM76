@@ -23,4 +23,37 @@ namespace ASM76 {
 	void VMterminate() {
 		puts("Terminate ASM76 environment");
 	}
+	//-------------------------------------------------------------------------
+	// ● 以二进制模式读入整个文件并返回其长度
+	//   如果不能正常读取，则返回-1。
+	//    buf : 用于返回指向文件内容的指针（char*），请自行free之
+	//-------------------------------------------------------------------------
+	long slurp(const char* filename, char** buf) {
+		FILE* fp;
+		size_t fsz;
+		long off_end;
+
+		fp = fopen(filename, "rb");
+		if (!fp) return -1;
+
+		if (fseek(fp, 0L, SEEK_END)) return -1;
+
+		off_end = ftell(fp);
+		if (off_end < 0) return -1;
+		fsz = (size_t) off_end;
+
+		*buf = (char*) malloc(fsz);
+
+		rewind(fp);
+		if (fread(*buf, 1, fsz, fp) != fsz) {
+			free(*buf);
+			return -1;
+		}
+
+		if (fclose(fp) == EOF) {
+			free(*buf);
+			return -1;
+		}
+		return (long) fsz;
+	}
 }

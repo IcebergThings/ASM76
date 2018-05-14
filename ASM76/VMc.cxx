@@ -8,55 +8,13 @@
 #include "ASM76.hpp"
 using namespace ASM76;
 
-long slurp(char const* path, char **buf) {
-	FILE  *fp;
-	size_t fsz;
-	long   off_end;
-	int    rc;
-
-	/* Open the file */
-	fp = fopen(path, "rb");
-	if( NULL == fp ) {
-		return -1L;
-	}
-
-	rc = fseek(fp, 0L, SEEK_END);
-	if( 0 != rc ) {
-		return -1L;
-	}
-
-	if( 0 > (off_end = ftell(fp)) ) {
-		return -1L;
-	}
-	fsz = (size_t)off_end;
-
-	*buf = (char*) malloc(fsz);
-	if( NULL == *buf ) {
-		return -1L;
-	}
-
-	rewind(fp);
-
-	if( fsz != fread(*buf, 1, fsz, fp) ) {
-		free(*buf);
-		return -1L;
-	}
-
-	if( EOF == fclose(fp) ) {
-		free(*buf);
-		return -1L;
-	}
-
-	return (long)fsz;
-}
-
 int main(int argc, char** argv) {
 	if (argc > 1) {
 		char* src_file = argv[1];
 
 		char* src = NULL;
 		long file_size = slurp(src_file, &src);
-		if( file_size < 0L ) {
+		if (file_size < 0) {
 			perror("Src read failed");
 			return 1;
 		}

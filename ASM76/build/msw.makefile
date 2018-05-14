@@ -8,6 +8,7 @@ include ../inc.makefile
 include ../routine.makefile
 
 LDFLAGS += -shared -Wl,--export-all-symbols
+CXXFLAGS += -I..
 
 test: VMtest.cxx $(TARGET)
 	$(CXX) $^ -o VMtest.exe $(CXXFLAGS) $(TARGET)
