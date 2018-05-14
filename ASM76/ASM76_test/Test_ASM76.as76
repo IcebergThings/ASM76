@@ -7,9 +7,11 @@ SLIA	0x1000 $0
 INTX	0x1 0x1000
 
 # Display a 'V'
+{AllocRegVar PlaceHolderV:1}
 DATB	0x56 $0
 SLBA	0x1000 $0
 INTX	0x2 0x1000
+{FreeRegVar PlaceHolderV:1}
 
 # Test for unaligned data
 JMPA [startp]

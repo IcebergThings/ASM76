@@ -33,6 +33,7 @@ namespace ASM76 {
 		case '\n':
 			prg++;
 			break;
+		case '{':
 		case '#':
 			prg = strchr(prg, '\n') + 1;
 			ensure_prg();
@@ -62,6 +63,25 @@ namespace ASM76 {
 		case '#':
 		case '[':
 			prg = strchr(prg, '\n') + 1;
+			break;
+		case '{':
+			// 读取宏操作
+			char macro_operation[13];
+			copy_opcode(macro_operation);
+
+			if (strcmp(macro_operation, "AllocRegVar") == 0) {
+				char identifier[13];
+				copy_varname(identifier);
+				alloc_reg_var(identifier, read_immediate_u32());
+			} else if (strcmp(macro_operation, "FreeRegVar") == 0) {
+				char identifier[13];
+				copy_varname(identifier);
+				free_reg_var(identifier);
+			}
+
+			prg = strchr(prg, '\n') + 1;
+			ensure_prg();
+
 			break;
 		case '\n':
 			prg++;
@@ -203,6 +223,25 @@ namespace ASM76 {
 		error("opcode too long");
 	}
 	//-------------------------------------------------------------------------
+	// ● 复制变量名称
+	//-------------------------------------------------------------------------
+	void Assembler::copy_varname(char* buf) {
+		for (size_t i = 0; i < MAX_TAG_NAME_SIZE; i++) {
+			if (prg[i] == '\n') {
+				error("variable name contains newline");
+				return;
+			}
+			if (prg[i] == ':') {
+				memcpy(buf, prg, i);
+				buf[i] = 0;
+				prg += i + 1;
+				skip('\n');
+				return;
+			}
+		}
+		error("variable name too long");
+	}
+	//-------------------------------------------------------------------------
 	// ● opcode: char[] → enum InstructionOpcode
 	//-------------------------------------------------------------------------
 	enum InstructionOpcode Assembler::parse_opcode(const char* str) {
@@ -242,6 +281,51 @@ namespace ASM76 {
 			break;
 		}
 		}
+	}
+	//-------------------------------------------------------------------------
+	// ● 分配寄存器变量
+	//-------------------------------------------------------------------------
+	void Assembler::alloc_reg_var(const char* identifier, int length) {
+		// Skip $0 ~ $4
+		for (int i = 4; i < 100; i++) {
+			if (!RegVars[i]) {
+				bool found = true;
+				// Find one free, ensure the whole length is free
+				for (int j = 1; j < length; j++) if (RegVars[i + j]) {
+					found = false;
+					break;
+				}
+				// Found one free space, alloc and exit
+				if (found) {
+					RegVar* temp_var = new RegVar;
+					temp_var->identifier = new char[strlen(identifier + 1)];
+					temp_var->reg = i;
+					temp_var->length = length;
+					strcpy(temp_var->identifier, identifier);
+					for (int j = 0; j < length; j++) RegVars[i + j] = temp_var;
+					printf("Register variable $%s allocated from $%d to $%d", identifier, i, i + length - 1);
+					return;
+				}
+			}
+		}
+		error("The registers are used up!");
+	}
+	//-------------------------------------------------------------------------
+	// ● 释放寄存器变量
+	//-------------------------------------------------------------------------
+	void Assembler::free_reg_var(const char* identifier) {
+		// Skip $0 ~ $4
+		for (int i = 4; i < 100; i++) {
+			if (RegVars[i] && RegVars[i]->identifier && strcmp(RegVars[i]->identifier, identifier) == 0) {
+				RegVar* temp_var = RegVars[i];
+				for (int j = i; j < temp_var->length; j++) RegVars[i + j] = NULL;
+				free(temp_var);
+				printf("Register variable $%s released ($%d - $%d)", identifier, i, i + temp_var->length - 1);
+				return;
+			}
+		}
+		printf("Register variable with identifier %s not found", identifier);
+		error("Attempt to free non-exist variable");
 	}
 	//-------------------------------------------------------------------------
 	// ● 读取立即数参数

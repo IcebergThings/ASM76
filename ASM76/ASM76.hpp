@@ -58,10 +58,17 @@ namespace ASM76 {
 			uint32_t pointer;
 		};
 		static const size_t MAX_TAG_NAME_SIZE = 256;
+
+		struct RegVar {
+			char* identifier;
+			int reg;
+			int length;
+		};
 	private:
 		const char* original_prg;
 		const char* prg;
 		V::Vector<Tag> tags;
+		RegVar* RegVars[100];
 	public:
 		Assembler(const char*);
 		void scan();
@@ -74,8 +81,13 @@ namespace ASM76 {
 		void skip(const char* s, const char* error_msg);
 		void copy_opcode(char* buf);
 		void copy_tagname(char* buf);
+		void copy_varname(char* buf);
 		enum InstructionOpcode parse_opcode(const char* str);
 		void read_parameters(Instruct* i);
+
+		void alloc_reg_var(const char* identifier, int size);
+		void free_reg_var(const char* identifier);
+
 		uint32_t read_immediate_u32();
 		uint32_t read_address();
 		uint32_t read_address_tag();
