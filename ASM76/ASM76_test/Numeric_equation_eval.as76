@@ -42,12 +42,17 @@ HALT
 [Str_Result]
 *The Result is:
 
+[StrEq]
+*(+ 1 10 25 100)
+
 [_eval->is_digit_true]
-CALA [ctoi]
-MVRB	$0 $8
+DATI	0x1 $8
+MINI	$4 $8
+CALA	[read_int]
+MVRI	$0 $8
 SLBA	0x1000 $0
-INTX	0x4 0x1000
-MVRB	$8 $0
+INTX	0x5 0x1000
+MVRI	$8 $0
 # Evaluate this digit using Op
 CALR	$24
 JMPA [_eval->is_digit_end]
@@ -76,6 +81,24 @@ DATB	0x30 $8
 MINB	$0 $8
 RETN
 
+# function readint : read a int sequence
+[read_int]
+DATI	0x0 $16
+[_read_int->loop_start]
+CALA	[next_char]
+MVRI	$0 $12
+CALA	[is_digit]
+JIEA	[_read_int->is_digit_true]
+MVRI	$16 $0
+RETN
+[_read_int->is_digit_true]
+DATI	0xa $8
+MTPI	$16 $8
+MVRI	$12 $0
+CALA	[ctoi]
+ADDI	$16 $0
+JMPA	[_read_int->loop_start]
+
 # function is_digit : check if a char is digit, will set REG109 (REG CMP), true for equals
 [is_digit]
 DATB	0x30 $8
@@ -99,8 +122,5 @@ RETN
 [_is_plus->true]
 DATI	[Op_add] $24
 RETN
-
-[StrEq]
-*(+ 3 4 6 2)
 
 # EOF
