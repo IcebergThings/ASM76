@@ -54,7 +54,21 @@ int main(int argc, char** argv) {
 	if (argc > 1) {
 		init();
 
-		Program p = ObjectCode::read_file(argv[1]);
+		Program p;
+		const char* file_ext = strrchr(argv[1], '.') + 1;
+		if ((*file_ext == 'A' || *file_ext == 'a')
+			&& (file_ext[1] == 'S' || file_ext[1] == 's')) {
+			char* src;
+			if (slurp(argv[1], &src) < 0) {
+				fprintf(stderr, "Error reading file %s", argv[1]);
+				exit(2);
+			}
+			Assembler a(src);
+			a.scan();
+			p = a.assemble();
+		} else {
+			p = ObjectCode::read_file(argv[1]);
+		}
 		VM v(p);
 		v.firmware = load_bios();
 		v.execute(false);
