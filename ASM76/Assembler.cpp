@@ -73,11 +73,11 @@ namespace ASM76 {
 			copy_opcode(macro_operation);
 
 			if (strcmp(macro_operation, "AllocRegVar") == 0) {
-				char identifier[13];
+				char identifier[MAX_TAG_NAME_SIZE];
 				copy_varname(identifier);
 				alloc_reg_var(identifier, read_immediate_u32());
 			} else if (strcmp(macro_operation, "FreeRegVar") == 0) {
-				char identifier[13];
+				char identifier[MAX_TAG_NAME_SIZE];
 				copy_varname(identifier);
 				free_reg_var(identifier);
 			}
@@ -229,7 +229,7 @@ namespace ASM76 {
 	// ● 复制变量名称
 	//-------------------------------------------------------------------------
 	void Assembler::copy_varname(char* buf) {
-		skip(" \t\v\n", "expected whitespace");
+		skip("$ \t\v\n", "expected whitespace or $ sign");
 		for (size_t i = 0; i < MAX_TAG_NAME_SIZE; i++) {
 			if (check(prg[i], "} \t\v\n")) {
 				memcpy(buf, prg, i);
@@ -380,8 +380,26 @@ namespace ASM76 {
 	uint32_t Assembler::read_register() {
 		skip(" \t\v", "expected whitespace");
 		skip('$');
-		if (!isdigit((unsigned char) *prg)) error("expected digit");
-		int reg = atoi(prg);
+		int reg = 0;
+		if (!isdigit((unsigned char) *prg)) {
+			// Reading a variable tag here
+			char identifier[MAX_TAG_NAME_SIZE];
+			prg--;
+			copy_varname(identifier);
+			bool found = false;
+			for (int i = 4; i < 100; i++) if (RegVars[i] && RegVars[i]->identifier && strcmp(RegVars[i]->identifier, identifier) == 0) {
+				found = true;
+				reg = RegVars[i]->reg;
+				break;
+			}
+			if (!found) {
+				printf("Register variable with identifier %s not found.\n", identifier);
+				error("Identifier not found");
+			}
+		} else {
+			// Reading direct register value
+			reg = atoi(prg);
+		}
 		if (reg < 0) error("register no. can't be negative");
 		if ((size_t) reg > VM::REGISTER_COUNT) error("register no. too large");
 		while (isdigit((unsigned char) *prg)) prg++;

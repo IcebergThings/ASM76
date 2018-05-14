@@ -8,11 +8,10 @@ INTX	0x1 0x1000
 
 # Display a 'V'
 {AllocRegVar PlaceHolderV 4}
-DATB	0x56 $0
-SLBA	0x1000 $0
+DATB	0x56 $PlaceHolderV
+SLBA	0x1000 $PlaceHolderV
 INTX	0x2 0x1000
 {FreeRegVar PlaceHolderV}
-{FreeRegVar PlaceHoldexrV}
 
 # Test for unaligned data
 JMPA [startp]
