@@ -12,6 +12,8 @@ namespace ASM76 {
 	//-------------------------------------------------------------------------
 	Assembler::Assembler(const char* program) {
 		prg = original_prg = program;
+
+		memset(RegVars, 0x0, sizeof(RegVars));
 	}
 	//-------------------------------------------------------------------------
 	// ● 第一遍扫描（扫描标签）
@@ -66,6 +68,7 @@ namespace ASM76 {
 			break;
 		case '{':
 			// 读取宏操作
+			prg++;
 			char macro_operation[13];
 			copy_opcode(macro_operation);
 
@@ -226,16 +229,12 @@ namespace ASM76 {
 	// ● 复制变量名称
 	//-------------------------------------------------------------------------
 	void Assembler::copy_varname(char* buf) {
+		skip(" \t\v\n", "expected whitespace");
 		for (size_t i = 0; i < MAX_TAG_NAME_SIZE; i++) {
-			if (prg[i] == '\n') {
-				error("variable name contains newline");
-				return;
-			}
-			if (prg[i] == ':') {
+			if (check(prg[i], "} \t\v\n")) {
 				memcpy(buf, prg, i);
 				buf[i] = 0;
-				prg += i + 1;
-				skip('\n');
+				prg += i;
 				return;
 			}
 		}
@@ -303,7 +302,7 @@ namespace ASM76 {
 					temp_var->length = length;
 					strcpy(temp_var->identifier, identifier);
 					for (int j = 0; j < length; j++) RegVars[i + j] = temp_var;
-					printf("Register variable $%s allocated from $%d to $%d", identifier, i, i + length - 1);
+					printf("Register variable $%s allocated from $%d to $%d.\n", identifier, i, i + length - 1);
 					return;
 				}
 			}
@@ -318,13 +317,13 @@ namespace ASM76 {
 		for (int i = 4; i < 100; i++) {
 			if (RegVars[i] && RegVars[i]->identifier && strcmp(RegVars[i]->identifier, identifier) == 0) {
 				RegVar* temp_var = RegVars[i];
-				for (int j = i; j < temp_var->length; j++) RegVars[i + j] = NULL;
+				for (int j = 0; j < temp_var->length; j++) RegVars[i + j] = NULL;
 				free(temp_var);
-				printf("Register variable $%s released ($%d - $%d)", identifier, i, i + temp_var->length - 1);
+				printf("Register variable $%s released ($%d - $%d).\n", identifier, i, i + temp_var->length - 1);
 				return;
 			}
 		}
-		printf("Register variable with identifier %s not found", identifier);
+		printf("Register variable with identifier %s not found.\n", identifier);
 		error("Attempt to free non-exist variable");
 	}
 	//-------------------------------------------------------------------------
