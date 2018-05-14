@@ -113,6 +113,8 @@ The starting of the local memory is used to store the program. Thanks the machin
 The ASM76 language syntax
 -------------------------
 
+**Warning**: The assembly source must be saved in Unix format (with `\n` as line ending).
+
 ```asm
 # ASM76 Example
 # Hash signs start comments.
@@ -129,6 +131,10 @@ ADDL $1 $1
 ADDL $1 $1
 ADDL $1 $1
 
+# You can use lower or upper case letters in hexadecimal numbers.
+# Of course, we don't recommend you to mix them.
+DATI 0xAaBb $9
+
 # A tag (label) can be used as an address.
 JMPA [PlaceToStart]
 PUSH $1, 4
@@ -143,20 +149,15 @@ DATI 4 $11
 DIVL $1 $11
 HALT
 
-# You can place data after HALT.
+# You can place arbitrary data after HALT.
 # Since the machine is HALTed, they will not get executed.
-RAWB 'A'
-RAWB 0xFF
-RAWI 0xFFFFFFFF
+RAWD 0x0123 0x4567 0x89ab 0xcdef 0x0000
 
-# You can use lower or upper case letters in hexadecimal numbers.
-# Of course, we don't recommend you to mix them.
-RAWL 0xfFfFfFfFfFfFfFfF
-FILL 0xABCaa312341
-
-# String literals are also supported.
-# Although it's WIP.
-FILL "A slow lazy fox swirled across the brown dog."
+# Raw strings are supported.
+# The new line and the star, which informs the assembler to save raw bytes,
+# are stripped. However, a zero byte is appended to every line of string.
+*Hello, world!
+*A slow lazy fox swirled across the brown dog.
 ```
 
 Appendix: object code format
