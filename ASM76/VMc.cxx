@@ -9,7 +9,15 @@
 using namespace ASM76;
 
 int main(int argc, char** argv) {
-	if (argc > 1) {
+	if (argc > 2) {
+		if (strcmp(argv[1], "-d") == 0) {
+			printf("Disassembling %s\n", argv[2]);
+
+			Disassembler d(ObjectCode::read_file(argv[2]));
+			char* s2 = d.disassemble();
+			puts(s2);
+		}
+	} else if (argc > 1) {
 		char* src_file = argv[1];
 
 		char* src = NULL;
