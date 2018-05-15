@@ -145,8 +145,13 @@ PUSH $1, 4
 
 # Register No. is decimal.
 MVRL $1 $31
-DATI 4 $11
-DIVL $1 $11
+
+# Register variables are readable names for register numbers.
+# Things contained in a pair of curly brackets are called macros.
+{AllocRegVar MyVar 11}
+DATI 4 $MyVar
+DIVL $1 $MyVar
+{FreeRegVar MyVar}
 HALT
 
 # You can place arbitrary data after HALT.
