@@ -128,6 +128,7 @@ namespace ASM76 {
 		BIOS_call* function_table;
 
 		BIOS(size_t function_table_count);
+		~BIOS();
 
 		uint32_t call(int fid, uint8_t* d);
 	};
