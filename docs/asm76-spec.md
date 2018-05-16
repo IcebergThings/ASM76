@@ -117,45 +117,45 @@ The ASM76 language syntax
 
 ```asm
 # ASM76 Example
+# This example is only demonstrative.
+# Although it is syntactically correct, it is not meaningful or practical.
+
 # Hash signs start comments.
-# Only whole line comments are allowed.
+# Only whole line comments are allowed,
+# i.e. you can't start a commend in the middle of a line.
 
 # Hexadecimal numbers.
-LCMM 0x100
+# You can use lower or upper case letters in hexadecimal numbers.
+# Of course, we don't recommend you to mix them.
+LCMM 0xAaBb
 
 # Decimal numbers and registers.
 # Parameters are separated by spaces, not commas.
-DATI 1 $1
-ADDL $1 $1
-ADDL $1 $1
-ADDL $1 $1
-ADDL $1 $1
+DATI 8012 $1
 
-# You can use lower or upper case letters in hexadecimal numbers.
-# Of course, we don't recommend you to mix them.
-DATI 0xAaBb $9
+# Register numbers are decimal.
+MVRL $1 $31
 
 # A tag (label) can be used as an address.
 JMPA [PlaceToStart]
-PUSH $1, 4
 
 # You can make adress tags by using [].
 # Use [some_name] to tag the current adress.
 [PlaceToStart]
 
-# Register No. is decimal.
-MVRL $1 $31
-
-# Register variables are readable names for register numbers.
-# Things contained in a pair of curly brackets are called macros.
-{AllocRegVar MyVar 11}
+# If you are bored with messing with register numbers,
+# you can leave the tiring task to the assembler.
+# Register variables are both readable and automatically assigned.
+{AllocRegVar MyVar 8}
 DATI 4 $MyVar
 DIVL $1 $MyVar
+
+# Things contained in a pair of curly brackets are called macros.
 {FreeRegVar MyVar}
-HALT
 
 # You can place arbitrary data after HALT.
 # Since the machine is HALTed, they will not get executed.
+HALT
 RAWD 0x0123 0x4567 0x89ab 0xcdef 0x0000
 
 # Raw strings are supported.
