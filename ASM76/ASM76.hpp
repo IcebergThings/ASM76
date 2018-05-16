@@ -135,14 +135,16 @@ namespace ASM76 {
 	// ● Virtual Machine类
 	//-------------------------------------------------------------------------
 	class VM {
+	public:
+		static const size_t REGISTER_COUNT = 112;
 	private:
 		uint8_t* local_memory;
 		size_t local_memory_size = 0x4000;
 		Instruct* instruct_memory;
-		uint8_t* reg;
+		uint8_t reg[REGISTER_COUNT];
 
 		// Common & special registers
-		#define REG(T, P) (*((T*) (reg + (P))))
+		#define REG(T, P) (*((T*) &reg[P]))
 		#define REG100 REG(uint32_t, 100)
 		#define REG104 REG(uint32_t, 104)
 		#define REGCMP REG(uint8_t, 109)
@@ -151,7 +153,6 @@ namespace ASM76 {
 	public:
 		BIOS* firmware;
 
-		static const size_t REGISTER_COUNT = 112;
 		template <class T> T* memfetch(uint32_t address) {
 			return (T*) (local_memory + address);
 		}

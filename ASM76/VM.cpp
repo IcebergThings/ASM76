@@ -17,9 +17,8 @@ namespace ASM76 {
 		instruct_memory = (Instruct*) local_memory;
 		memcpy(instruct_memory, program.instruct, program.size);
 
-		// 100+ registers
-		reg = new uint8_t[REGISTER_COUNT];
-		memset(reg, 0, REGISTER_COUNT);
+		// clear registers
+		memset(reg, 0, sizeof(reg));
 
 		// Setup registers
 		// Instruction pointer
@@ -32,7 +31,6 @@ namespace ASM76 {
 	//-------------------------------------------------------------------------
 	VM::~VM() {
 		free(local_memory);
-		delete[] reg;
 	}
 	//-------------------------------------------------------------------------
 	// ● 输出寄存器值（调试用）
