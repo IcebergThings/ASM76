@@ -4,8 +4,9 @@
 
 TARGET = ASM76.dll
 
-include ../inc.makefile
-include ../routine.makefile
+MAKE76_ROOT?=..
+include $(MAKE76_ROOT)/inc.makefile
+include $(MAKE76_ROOT)/routine.makefile
 
 LDFLAGS += -shared -Wl,--export-all-symbols
 CXXFLAGS += -I..
