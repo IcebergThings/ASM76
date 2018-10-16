@@ -96,7 +96,6 @@ namespace ASM76 {
 				prg++;
 			}
 			instructs.push(0x00);
-			skip('\n');
 			break;
 		default:
 			Instruct i;
@@ -104,8 +103,16 @@ namespace ASM76 {
 			char opcode[13];
 			copy_opcode(opcode);
 			i.opcode = parse_opcode(opcode);
+			skip_if("$ \t\v");
 			// 读取参数
 			read_parameters(&i);
+
+			skip_if(" \t\v");
+			if (prg[0] == '#') { // 句末注释
+				while (prg[0] != '\n') { // 一路忽略到回车
+					prg++;
+				}
+			}
 			// 读取换行
 			skip('\n');
 			// 将Instruct转换为字节数组保存
@@ -193,6 +200,13 @@ namespace ASM76 {
 		prg += len;
 	}
 	//-------------------------------------------------------------------------
+	// ● 跳过某些字符组成的串
+	//-------------------------------------------------------------------------
+	void Assembler::skip_if(const char* s) {
+		size_t len = strspn(prg, s);
+		if (len) prg += len;
+	}
+	//-------------------------------------------------------------------------
 	// ● 复制标签名称
 	//-------------------------------------------------------------------------
 	void Assembler::copy_tagname(char* buf) {
@@ -229,7 +243,7 @@ namespace ASM76 {
 	// ● 复制变量名称
 	//-------------------------------------------------------------------------
 	void Assembler::copy_varname(char* buf) {
-		skip("$ \t\v\n", "expected whitespace or $ sign");
+		skip_if("$ \t\v\n");
 		for (size_t i = 0; i < MAX_TAG_NAME_SIZE; i++) {
 			if (check(prg[i], "} \t\v\n")) {
 				memcpy(buf, prg, i);
@@ -330,7 +344,7 @@ namespace ASM76 {
 	// ● 读取立即数参数
 	//-------------------------------------------------------------------------
 	uint32_t Assembler::read_immediate_u32() {
-		skip(" \t\v", "expected whitespace");
+		skip_if(" \t\v");
 		if (!isdigit((unsigned char) *prg)) error("expected digit");
 		long long n;
 		char* end;
@@ -348,13 +362,13 @@ namespace ASM76 {
 	// ● 读取地址参数
 	//-------------------------------------------------------------------------
 	uint32_t Assembler::read_address() {
-		return prg[1] == '[' ? read_address_tag() : read_immediate_u32();
+		skip_if(" \t\v");
+		return prg[0] == '[' ? read_address_tag() : read_immediate_u32();
 	}
 	//-------------------------------------------------------------------------
 	// ● 读取标签参数
 	//-------------------------------------------------------------------------
 	uint32_t Assembler::read_address_tag() {
-		skip(" \t\v", "expected whitespace");
 		skip('[');
 		char name[MAX_TAG_NAME_SIZE];
 		for (size_t i = 0; i < MAX_TAG_NAME_SIZE + 1; i++) if (prg[i] == ']') {
@@ -378,8 +392,8 @@ namespace ASM76 {
 	//   返回寄存器编号。
 	//-------------------------------------------------------------------------
 	uint32_t Assembler::read_register() {
-		skip(" \t\v", "expected whitespace");
-		skip('$');
+		skip_if(" \t\v");
+		skip_if("$");
 		int reg = 0;
 		if (!isdigit((unsigned char) *prg)) {
 			// Reading a variable tag here

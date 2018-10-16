@@ -137,25 +137,25 @@ namespace ASM76 {
 	// ● LDLA LDIA LDBA
 	//-------------------------------------------------------------------------
 	execute(LDLA) {
-		REG(uint64_t, b) = *memfetch<uint64_t>(a);
+		REG(uint64_t, a) = *memfetch<uint64_t>(b);
 	}
 	execute(LDIA) {
-		REG(uint32_t, b) = *memfetch<uint32_t>(a);
+		REG(uint32_t, a) = *memfetch<uint32_t>(b);
 	}
 	execute(LDBA) {
-		REG(uint8_t, b) = *memfetch<uint8_t>(a);
+		REG(uint8_t, a) = *memfetch<uint8_t>(b);
 	}
 	//-------------------------------------------------------------------------
 	// ● LDLR LDIR LDBR
 	//-------------------------------------------------------------------------
 	execute(LDLR) {
-		REG(uint64_t, b) = *memfetch<uint64_t>(REG(uint32_t, a));
+		REG(uint64_t, a) = *memfetch<uint64_t>(REG(uint32_t, b));
 	}
 	execute(LDIR) {
-		REG(uint32_t, b) = *memfetch<uint32_t>(REG(uint32_t, a));
+		REG(uint32_t, a) = *memfetch<uint32_t>(REG(uint32_t, b));
 	}
 	execute(LDBR) {
-		REG(uint8_t, b) = *memfetch<uint8_t>(REG(uint32_t, a));
+		REG(uint8_t, a) = *memfetch<uint8_t>(REG(uint32_t, b));
 	}
 	//-------------------------------------------------------------------------
 	// ● SLLA SLIA SLBA
@@ -185,49 +185,49 @@ namespace ASM76 {
 	// ● DATL DATI DATB
 	//-------------------------------------------------------------------------
 	execute(DATL) {
-		REG(uint64_t, b) = (uint64_t) a << 32 | b;
+		REG(uint64_t, a) = (uint64_t) b << 32 | a;
 	}
 	execute(DATI) {
-		REG(uint32_t, b) = (uint32_t) a;
+		REG(uint32_t, a) = (uint32_t) b;
 	}
 	execute(DATB) {
-		REG(uint8_t, b) = (uint8_t) a;
+		REG(uint8_t, a) = (uint8_t) b;
 	}
 	//-------------------------------------------------------------------------
 	// ● MOVL MOVI MOVB
 	//-------------------------------------------------------------------------
 	execute(MOVL) {
-		*memfetch<uint64_t>(b) = *memfetch<uint64_t>(a);
+		*memfetch<uint64_t>(a) = *memfetch<uint64_t>(b);
 	}
 	execute(MOVI) {
-		*memfetch<uint32_t>(b) = *memfetch<uint32_t>(a);
+		*memfetch<uint32_t>(a) = *memfetch<uint32_t>(b);
 	}
 	execute(MOVB) {
-		*memfetch<uint8_t>(b) = *memfetch<uint8_t>(a);
+		*memfetch<uint8_t>(a) = *memfetch<uint8_t>(b);
 	}
 	//-------------------------------------------------------------------------
 	// ● MVPL MVPI MVPB
 	//-------------------------------------------------------------------------
 	execute(MVPL) {
-		*memfetch<uint64_t>(REG(uint32_t, b)) = *memfetch<uint64_t>(REG(uint32_t, a));
+		*memfetch<uint64_t>(REG(uint32_t, a)) = *memfetch<uint64_t>(REG(uint32_t, b));
 	}
 	execute(MVPI) {
-		*memfetch<uint32_t>(REG(uint32_t, b)) = *memfetch<uint32_t>(REG(uint32_t, a));
+		*memfetch<uint32_t>(REG(uint32_t, a)) = *memfetch<uint32_t>(REG(uint32_t, b));
 	}
 	execute(MVPB) {
-		*memfetch<uint8_t>(REG(uint32_t, b)) = *memfetch<uint8_t>(REG(uint32_t, a));
+		*memfetch<uint8_t>(REG(uint32_t, a)) = *memfetch<uint8_t>(REG(uint32_t, b));
 	}
 	//-------------------------------------------------------------------------
 	// ● MVRL MVRI MVRB
 	//-------------------------------------------------------------------------
 	execute(MVRL) {
-		REG(uint64_t, b) = REG(uint64_t, a);
+		REG(uint64_t, a) = REG(uint64_t, b);
 	}
 	execute(MVRI) {
-		REG(uint32_t, b) = REG(uint32_t, a);
+		REG(uint32_t, a) = REG(uint32_t, b);
 	}
 	execute(MVRB) {
-		REG(uint8_t, b) = REG(uint8_t, a);
+		REG(uint8_t, a) = REG(uint8_t, b);
 	}
 	//-------------------------------------------------------------------------
 	// ● ADDL ADDI ADDB

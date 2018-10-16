@@ -80,6 +80,7 @@ namespace ASM76 {
 		bool check(char c, const char* s);
 		void skip(char);
 		void skip(const char* s, const char* error_msg);
+		void skip_if(const char* s);
 		void copy_opcode(char* buf);
 		void copy_tagname(char* buf);
 		void copy_varname(char* buf);

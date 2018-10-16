@@ -1,126 +1,38 @@
 # This is a Lispy numeric equation evaluator, as a experiment for the later full fledged Lisp/VM76 system
 
-# String index
-DATI	0x0 $4
-# Operation pointer
-DATI	[Op_null] $24
-# Result accumulator
-DATI	0x0 $28
+DATI    $0 [Input_String]
+CALA    [Tokenize]
 
-[eval]
-CALA [next_char]
-MVRB	$0 $12
-
-# is digit?
-CALA [is_digit]
-JIEA [_eval->is_digit_true]
-# not a digit, display the char
-SLBA	0x1000 $0
-INTX	0x2 0x1000
-MVRB	$12 $0
-[_eval->is_digit_end]
-
-# is Op?
-CALA [is_plus]
-
-# while not NULL
-DATB	0x0 $8
-CMPB	$0 $8
-JIEA	[end]
-JMPA	[eval]
-
-[end]
-INTX	0x3 [Str_Result]
-SLBA	0x1000 $28
-INTX	0x5 0x1000
 HALT
 
-#===============================================================================
-# Other functions & data goes beyond HALT
-#===============================================================================
-
-[Str_Result]
-*The Result is:
-
-[StrEq]
-*(+ 1 10 25 100)
-
-[_eval->is_digit_true]
-DATI	0x1 $8
-MINI	$4 $8
-CALA	[read_int]
-MVRI	$0 $8
-SLBA	0x1000 $0
-INTX	0x5 0x1000
-MVRI	$8 $0
-# Evaluate this digit using Op
-CALR	$24
-JMPA [_eval->is_digit_end]
-
-# Null operation, do nothing
-[Op_null]
+# ========================================================
+#  FUNCTIONS SECTION
+# ========================================================
+[Tokenize]
+MVRI    $4 $0                   # Copy string address to $4 for string index
+[__Tokenize_loop_start]
+LDBR    $8 $4                   # Copy char with index $4 to $8 (byte)
+DATB    $9 0x0                  # 0x0 -> $9
+CMPB    $8 $9                   # Compare the char with NULL
+JIEA    [__Tokenize_loop_end]   # stop on NULL
+DATB    $9 0x20                 # ' ' -> $9
+CMPB    $8 $9                   # Compare the char with SPACE
+JIEA    [__Tokenize_loop_next]  # Skip whitespace
+SLBA    [FREE_RAM_START] $8     # Copy char into [FREE_RAM_START] for <putc>
+INTX    0x2 [FREE_RAM_START]    # 0x1:putc, ADDR=[FREE_RAM_START]
+[__Tokenize_loop_next]
+DATI    $8 0x1                  # For inc(1)
+ADDI    $4 $8                   # inc($4)
+JMPA    [__Tokenize_loop_start]
+[__Tokenize_loop_end]
 RETN
 
-# Add operation
-[Op_add]
-ADDI	$28 $0
-RETN
+# ========================================================
+#  DATA SECTION
+# ========================================================
+[Input_String]
+*( + (* 46  -6 )120)
 
-# function next_char : read next char into $0
-[next_char]
-DATI	[StrEq] $0
-ADDI	$0 $4
-LDBR	$0 $0
-DATI	0x1 $8
-ADDI	$4 $8
-RETN
-
-# function ctoi : convert char into int
-[ctoi]
-DATB	0x30 $8
-MINB	$0 $8
-RETN
-
-# function readint : read a int sequence
-[read_int]
-DATI	0x0 $16
-[_read_int->loop_start]
-CALA	[next_char]
-MVRI	$0 $12
-CALA	[is_digit]
-JIEA	[_read_int->is_digit_true]
-MVRI	$16 $0
-RETN
-[_read_int->is_digit_true]
-DATI	0xa $8
-MTPI	$16 $8
-MVRI	$12 $0
-CALA	[ctoi]
-ADDI	$16 $0
-JMPA	[_read_int->loop_start]
-
-# function is_digit : check if a char is digit, will set REG109 (REG CMP), true for equals
-[is_digit]
-DATB	0x30 $8
-DATB	0x39 $9
-CMPB	$8 $0
-JIGA	[_is_digit->false]
-CMPB	$0 $9
-JIGA	[_is_digit->false]
-DATB	0x1 $109
-RETN
-[_is_digit->false]
-DATB	0x0 $109
-RETN
-
-# function is_plus : check if a char is plus, will set Op to Op_add
-[is_plus]
-DATB	0x2B $8
-CMPB	$8 $0
-JIEA	[_is_plus->true]
-RETN
-[_is_plus->true]
-DATI	[Op_add] $24
-RETN
+[FREE_RAM_START]
 
 # EOF
