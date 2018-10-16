@@ -10,9 +10,9 @@
 *.so
 *.dll
 *.exe
-ASM76/VMtest
-ASM76/VMexec
-ASM76/VMc
+VMtest
+VMexec
+VMc
 docs/.sass-cache/
 docs/_site/
 
