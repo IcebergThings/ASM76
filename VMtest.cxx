@@ -15,17 +15,17 @@ void test_mem() {
 	puts("===== Memory =====");
 	Instruct instruct[] = {
 		{LCMM, 0x4000000, 0},
-		{DATI, 0xABCD1234, 1},
-		{DATB, 'V', 5},
-		{DATB, 'M', 6},
-		{DATB, '7', 7},
-		{DATB, '6', 8},
+		{DATI, 1, 0xABCD1234},
+		{DATB, 5, 'V'},
+		{DATB, 6, 'M'},
+		{DATB, 7, '7'},
+		{DATB, 8, '6'},
 		{SLLA, 0x2000000, 1},
 		{SLIA, 0x2500000, 2},
 		{SLBA, 0x2700000, 3},
-		{LDLA, 0x2500000, 51},
-		{LDIA, 0x2500000, 51},
-		{LDBA, 0x2500000, 61},
+		{LDLA, 51, 0x2500000},
+		{LDIA, 51, 0x2500000},
+		{LDBA, 61, 0x2500000},
 		{HALT, 0, 0},
 	};
 	Program p {
@@ -41,7 +41,7 @@ void test_basic_algebra() {
 	puts("===== Basic Algebra =====");
 	Instruct instruct[] = {
 		{LCMM, 0x100, 0},
-		{DATI, 0x1, 1},
+		{DATI, 1, 0x1},
 		// $1 = $1 + $1
 		// 1, 2, 4, 8, 16, ...
 		{ADDL, 1, 1},
@@ -49,9 +49,9 @@ void test_basic_algebra() {
 		{ADDL, 1, 1},
 		{ADDL, 1, 1},
 		// Put the result somewhere else
-		{MVRL, 1, 31},
+		{MVRL, 31, 1},
 		// Then divide it by 4
-		{DATI, 0x4, 11},
+		{DATI, 11, 0x4},
 		{DIVL, 1, 11},
 		{HALT, 0, 0},
 	};
@@ -68,9 +68,9 @@ void test_disassembler_assembler() {
 	puts("===== Assembler =====");
 	const char* const s1 =
 		"# Comments.\n"
-		"DATB	0x1 $20\n"
-		"DATB	0xA $10\n"
-		"DATB	0x2 $15\n"
+		"DATB	$20 0x1\n"
+		"DATB	$10 0xA\n"
+		"DATB	$15 0x2\n"
 		"[loop_start]\n"
 		"ADDL	$15 $15\n"
 		"ADDL	$3 $20\n"
@@ -118,9 +118,9 @@ void test_tag() {
 void test_flow_control() {
 	puts("===== Flow Control & Logistics =====");
 	Instruct instruct[] = {
-		{DATB, 0x1, 20},
-		{DATB, 0xA, 10},
-		{DATB, 0x2, 15},
+		{DATB, 20, 0x1},
+		{DATB, 10, 0xA},
+		{DATB, 15, 0x2},
 		{ADDL, 15, 15},
 		{ADDL, 3, 20},
 		{CMPI, 3, 10},
@@ -145,10 +145,10 @@ static uint32_t test_bios_call(uint8_t* input) {
 void test_bios() {
 	puts("===== BIOS Test =====");
 	const char* const s =
-		"DATI	0x76 $0\n"
+		"DATI	$0 0x76\n"
 		"SLIA	0x100 $0\n"
 		"INTX	0x1 0x100\n"
-		"DATI	0xAB $0\n"
+		"DATI	$0 0xAB\n"
 		"SLIA	0x100 $0\n"
 		"INTX	0x1 0x100\n"
 		"HALT\n"
@@ -190,9 +190,9 @@ void test_object_code() {
 void test_speed() {
 	puts("===== Speed Test: 0x3000000 cycles =====");
 	Instruct instruct[] = {
-		{DATI, 0x1, 20},
-		{DATI, 0x3000000, 60},
-		{DATI, 0x2, 15},
+		{DATI, 20, 0x1},
+		{DATI, 60, 0x3000000},
+		{DATI, 15, 0x2},
 		{ADDL, 3, 20},
 		{CMPI, 3, 60},
 		{JILA, 3 * sizeof(Instruct), 0},
