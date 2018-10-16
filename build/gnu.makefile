@@ -4,7 +4,7 @@
 
 TARGET = libASM76.so
 
-MAKE76_ROOT?=..
+MAKE76_ROOT?=.
 include $(MAKE76_ROOT)/inc.makefile
 include $(MAKE76_ROOT)/routine.makefile
 
