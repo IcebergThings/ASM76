@@ -145,9 +145,12 @@ namespace ASM76 {
 		Instruct* instruct_memory;
 		uint8_t reg[REGISTER_COUNT];
 
+		// For optimization purpose, let's make REG100 non-exposed (who needs that anyways)
+		uint32_t _reg_100;
+
 		// Common & special registers
 		#define REG(T, P) (*((T*) &reg[P]))
-		#define REG100 REG(uint32_t, 100)
+		#define REG100 _reg_100
 		#define REG104 REG(uint32_t, 104)
 		#define REGCMP REG(uint8_t, 109)
 		#define REGISF REG(uint8_t, 110)

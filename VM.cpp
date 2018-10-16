@@ -100,6 +100,7 @@ namespace ASM76 {
 		default:
 			printf("Unknown opcode %d (0x%x)\n", opcode, opcode);
 		}
+		//REG(uint32_t, 100) = REG100;
 	}
 	//-------------------------------------------------------------------------
 	// ● 解释一条指令
