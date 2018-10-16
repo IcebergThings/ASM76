@@ -67,28 +67,40 @@ namespace ASM76 {
 	void VM::execute_from(uint32_t start_pos, bool debug_process) {
 		REG100 = start_pos;
 		Instruct* now = memfetch<Instruct>(REG100);
-		uint16_t opcode = now->opcode;
-		while (opcode != HALT) {
-			if (debug_process) printf("%08x: %04x, %x, %x\n", REG100, now->opcode, now->a, now->b);
-			VM::execute_instruction_inline(opcode, now->a, now->b);
-			REG100 += sizeof(Instruct);
-			now = memfetch<Instruct>(REG100);
-			opcode = now->opcode;
+		if (debug_process) {
+			uint16_t opcode = NOOP;
+			while (opcode != HALT) {
+				opcode = now->opcode;
+				printf("%08x: %04x, %x, %x\n", REG100, opcode, now->a, now->b);
+				VM::execute_instruction_inline(opcode, now->a, now->b);
+				REG100 += sizeof(Instruct);
+				now = memfetch<Instruct>(REG100);
+			}
+		} else {
+			for (;;) {
+				uint16_t opcode = now->opcode;
+				//VM::execute_instruction_inline(opcode, now->a, now->b); Expand this to better optimize
+				switch (opcode) {
+				#define I(x, ta, tb) case x: execute_##x(now->a, now->b); break;
+				#define EXCLUDE_HALT
+				#include "instructions.hpp"
+				case HALT:
+					goto endloop;
+				default:
+					printf("Unknown opcode %d (0x%x)\n", opcode, opcode);
+				}
+				REG100 += sizeof(Instruct);
+				now = memfetch<Instruct>(REG100);
+			}
+			endloop:
+			return;
 		}
 	}
 	//-------------------------------------------------------------------------
 	// ● 解释
 	//-------------------------------------------------------------------------
 	void VM::execute(bool debug_process) {
-		Instruct* now = memfetch<Instruct>(REG100);
-		uint16_t opcode = now->opcode;
-		while (opcode != HALT) {
-			if (debug_process) printf("%08x: %04x, %x, %x\n", REG100, now->opcode, now->a, now->b);
-			VM::execute_instruction_inline(opcode, now->a, now->b);
-			REG100 += sizeof(Instruct);
-			now = memfetch<Instruct>(REG100);
-			opcode = now->opcode;
-		}
+		VM::execute_from(0, debug_process);
 	}
 	//-------------------------------------------------------------------------
 	// ● 解释一条指令 - 模板
@@ -100,7 +112,6 @@ namespace ASM76 {
 		default:
 			printf("Unknown opcode %d (0x%x)\n", opcode, opcode);
 		}
-		//REG(uint32_t, 100) = REG100;
 	}
 	//-------------------------------------------------------------------------
 	// ● 解释一条指令
