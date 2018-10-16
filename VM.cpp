@@ -78,10 +78,15 @@ namespace ASM76 {
 			}
 		} else {
 			for (;;) {
-				uint16_t opcode = now->opcode;
+				uint16_t opcode = *memfetch<uint16_t>(REG100);
+				uint32_t arga = (*memfetch<uint32_t>(REG100 + sizeof(opcode)));
+				// Most instructions has at least one operand (mostly flow control has this).
+				// As this is not designed for massive calculations, mostly logics (flow control)
+				// We lazyly load argument b
+				#define argb (*memfetch<uint32_t>(REG100 + (sizeof(opcode) + sizeof(arga))))
 				//VM::execute_instruction_inline(opcode, now->a, now->b); Expand this to better optimize
 				switch (opcode) {
-				#define I(x, ta, tb) case x: execute_##x(now->a, now->b); break;
+				#define I(x, ta, tb) case x: execute_##x(arga, argb); break;
 				#define EXCLUDE_HALT
 				#include "instructions.hpp"
 				case HALT:
@@ -90,7 +95,6 @@ namespace ASM76 {
 					printf("Unknown opcode %d (0x%x)\n", opcode, opcode);
 				}
 				REG100 += sizeof(Instruct);
-				now = memfetch<Instruct>(REG100);
 			}
 			endloop:
 			return;

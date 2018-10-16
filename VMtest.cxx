@@ -188,13 +188,13 @@ void test_object_code() {
 }
 
 void test_speed() {
-	puts("===== Speed Test: 0x3000000 cycles =====");
+	puts("===== Speed Test: 0xFFFFFFF cycles =====");
 	Instruct instruct[] = {
-		{DATI, 20, 0x1},
-		{DATI, 60, 0x3000000},
-		{DATI, 15, 0x2},
-		{ADDL, 3, 20},
-		{CMPI, 3, 60},
+		{DATI, 0, 0x1},
+		{DATI, 4, 0x0},
+		{DATI, 8, 0xFFFFFFF},
+		{ADDI, 4, 0},
+		{CMPI, 4, 8},
 		{JILA, 3 * sizeof(Instruct), 0},
 		{HALT, 0, 0},
 	};
@@ -209,10 +209,11 @@ void test_speed() {
 	auto t1 = chrono::high_resolution_clock::now();
 	v.execute(false);
 	auto t2 = chrono::high_resolution_clock::now();
-	chrono::duration<double, milli> delay = t2 - t1;
-	printf("Elapsed time: %lfms\nMIPS: %lf\n",
+	v.dump_registers();
+	chrono::duration<double, nano> delay = t2 - t1;
+	printf("Elapsed time: %lfns\nMIPS: %lf\n",
 		delay.count(),
-		((double) 0x3000000) * 3.0 / ((double) delay.count()) / 10000.0
+		((double) 0xFFFFFFF) * 3.0 / ((double) delay.count()) * 1e9 / 1e6
 	);
 }
 
