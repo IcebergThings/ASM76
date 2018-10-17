@@ -9,6 +9,8 @@
 #include <cstring>
 #include <cstdio>
 #include <mutex>
+#include <vector>
+#include <string>
 using namespace std;
 
 #include "VLib/V.hpp"
@@ -70,9 +72,28 @@ namespace ASM76 {
 		const char* prg;
 		V::Vector<Tag> tags;
 		RegVar* RegVars[108];
+
+		struct SymbolPlaceHolder {
+			char* identifier;
+			uint32_t* ptr;
+		};
+
+		enum EmitState {
+			Inactive,
+			EmitData,
+			EmitInst,
+		};
 	public:
 		Assembler(const char*);
-		void scan();
+
+		static std::vector<char*> tokenize(const char* prg);
+		static bool is_string_literal(const char* s);
+		static bool is_number_literal(const char* s);
+		static bool is_symbol_literal(const char* s);
+		static bool is_register_literal(const char* s);
+		static uint16_t read_opcode(const char* s);
+
+		void scan() {};
 		Program assemble();
 	private:
 		void error(const char* message);

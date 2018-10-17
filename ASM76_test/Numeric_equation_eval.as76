@@ -1,14 +1,15 @@
 # This is a Lispy numeric equation evaluator, as a experiment for the later full fledged Lisp/VM76 system
 
+CALA    [Intialize]             # Intialize()
 DATI    $0 [Input_String]
-CALA    [Tokenize]
+CALA    [Tokenize]              # Tokenize(input = [Input_String])
 
 HALT
 
 # ========================================================
 #  FUNCTIONS SECTION
 # ========================================================
-[Tokenize]
+[Tokenize]                      # Tokenize(char* input <$0>)
 MVRI    $4 $0                   # Copy string address to $4 for string index
 [__Tokenize_loop_start]
 LDBR    $8 $4                   # Copy char with index $4 to $8 (byte)
@@ -18,8 +19,7 @@ JIEA    [__Tokenize_loop_end]   # stop on NULL
 DATB    $9 0x20                 # ' ' -> $9
 CMPB    $8 $9                   # Compare the char with SPACE
 JIEA    [__Tokenize_loop_next]  # Skip whitespace
-SLBA    [FREE_RAM_START] $8     # Copy char into [FREE_RAM_START] for <putc>
-INTX    0x2 [FREE_RAM_START]    # 0x1:putc, ADDR=[FREE_RAM_START]
+INTR    0x2 $8                  # 0x1:putc, VAL=$8
 [__Tokenize_loop_next]
 DATI    $8 0x1                  # For inc(1)
 ADDI    $4 $8                   # inc($4)
@@ -27,12 +27,49 @@ JMPA    [__Tokenize_loop_start]
 [__Tokenize_loop_end]
 RETN
 
+[Memset]                        # Memset(void* start <$0>, uint32_t size <$4>, uint8_t data <$8>)
+MOVI    $12 $0
+ADDI    $12 $4                  # Endpoint = start + size -> $12
+MOVI    $16 $0                  # Counter  = start        -> $16
+[__Memset_loop_start]
+CMPI    $16 $12                 # Counter == Endpoint ?
+JIEA    [__Memset_loop_end]     # if (Counter == Endpoint) exit loop
+SLRB    $16 $8                  # *((uint8_t*) counter) = data
+DATI    $20 0x1                 # 0x1 -> $20
+ADDI    $16 $20                 # Counter <$16> += 1
+JMPA    [__Memset_loop_start]   # While loop
+[__Memset_loop_end]
+RETN
+
+[Intialize]                     # Intialize()
+DATI    $0 [FREE_RAM_START]
+DATI    $4 0xC00
+DATB    $8 0x00
+CALA    [Memset]                # Memset(start = [FREE_RAM_START], size = 12 * 256, data = 0x00)
+RETN
+
 # ========================================================
 #  DATA SECTION
 # ========================================================
 [Input_String]
-*( + (* 46  -6 )120)
+FILL "( + (* 46  -6 )120)"
 
 [FREE_RAM_START]
+# We will first need a heap memory management system
+# malloc/free
+# The start of the heap will be memory meta
+
+# Meta(ptr, length, next)
+#  ptr    -> Pointer to mem  - 4 bytes
+#  length -> Length of block - 4 bytes
+#  next   -> Next meta ptr   - 4 bytes
+# -------------------------- - 12 bytes total
+
+# We will create a linked list for Tokenize
+# Link(T(a), a, b)
+#  T(a) -> Type of A.        - 1 byte
+#  a    -> Label (A) of link - 4 bytes
+#  b    -> Link.next (ptr)   - 4 bytes
+# -------------------------- - 9 bytes total
 
 # EOF

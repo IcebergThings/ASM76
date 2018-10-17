@@ -46,7 +46,7 @@ I(PUSH, TREG, TIMM) I(POP_, TREG, TIMM)
 
 // BIOS Instructions
 I(INTX, TIMM, TADD)
-I(INTR, TREG, TADD)
+I(INTR, TIMM, TREG)
 
 // 自带清理宏
 #undef I

@@ -16,407 +16,236 @@ namespace ASM76 {
 		memset(RegVars, 0x0, sizeof(RegVars));
 	}
 	//-------------------------------------------------------------------------
-	// ● 第一遍扫描（扫描标签）
+	// ● Tokenize
 	//-------------------------------------------------------------------------
-	void Assembler::scan() {
-		uint32_t size = 0x0;
-		while (prg && *prg) switch (*prg) {
-		case '[': {
-			prg++;
-			char* tagname = new char[MAX_TAG_NAME_SIZE];
-			copy_tagname(tagname);
-			Tag tag;
-			tag.name = tagname;
-			tag.pointer = size;
-			printf("Tag '%s': 0x%x\n", tag.name, tag.pointer);
-			tags.push(tag);
-			break;
-		}
-		case '\n':
-			prg++;
-			break;
-		case '{':
-		case '#':
-			prg = strchr(prg, '\n') + 1;
-			ensure_prg();
-			break;
-		case '*':
-			prg++;
-			while (*prg != '\n' && *prg) {
-				size++;
-				prg++;
-			}
-			size++; // reserve space for 0x00
-			skip('\n');
-			break;
-		default:
-			size += sizeof(Instruct);
-			prg = strchr(prg, '\n') + 1;
-			ensure_prg();
-		}
-		prg = original_prg;
-	}
-	//-------------------------------------------------------------------------
-	// ● 第二遍扫描（汇编）
-	//-------------------------------------------------------------------------
-	Program Assembler::assemble() {
-		V::Vector<uint8_t, false> instructs(120);
-		while (prg && *prg) switch (*prg) {
-		case '#':
-		case '[':
-			prg = strchr(prg, '\n') + 1;
-			break;
-		case '{':
-			// 读取宏操作
-			prg++;
-			char macro_operation[13];
-			copy_opcode(macro_operation);
+	std::vector<char*> Assembler::tokenize(const char* prg) {
+		std::vector<char*> token_list = {};
+		std::string current_token = "";
 
-			if (strcmp(macro_operation, "AllocRegVar") == 0) {
-				char identifier[MAX_TAG_NAME_SIZE];
-				copy_varname(identifier);
-				alloc_reg_var(identifier, read_immediate_u32());
-			} else if (strcmp(macro_operation, "FreeRegVar") == 0) {
-				char identifier[MAX_TAG_NAME_SIZE];
-				copy_varname(identifier);
-				free_reg_var(identifier);
-			}
+		bool comment_mode = false;
+		bool string_mode = false;
+		bool string_escape = false;
 
-			prg = strchr(prg, '\n') + 1;
-			ensure_prg();
-
-			break;
-		case '\n':
-			prg++;
-			break;
-		case '*':
-			prg++;
-			while (*prg && *prg != '\n') {
-				instructs.push(*prg);
-				prg++;
-			}
-			instructs.push(0x00);
-			break;
-		default:
-			Instruct i;
-			// 读取opcode
-			char opcode[13];
-			copy_opcode(opcode);
-			i.opcode = parse_opcode(opcode);
-			skip_if("$ \t\v");
-			// 读取参数
-			read_parameters(&i);
-
-			skip_if(" \t\v");
-			if (prg[0] == '#') { // 句末注释
-				while (prg[0] != '\n') { // 一路忽略到回车
-					prg++;
+		while (*prg != '\0') {
+			char c = *prg;
+			if (comment_mode) {
+				// Wait for new line
+				if (c == '\n') comment_mode = false;
+			} else if (string_mode) {
+				if (string_escape) {
+					// Now escape only, no \n stuff
+					current_token.push_back(c);
+					string_escape = false;
+				} else if (c == '\\') {
+					// Start escape
+					string_escape = true;
+				} else {
+					if (c == '"') string_mode = false;
+					current_token.push_back(c);
+				}
+			} else {
+				if (c == ' ' || c == '\t' || c == '\n' || c == '\v' || c == '#' || c == '"') {
+					// Previous token ends, new token starts
+					// If current_token is empty, do nothing.
+					if (current_token.length()) {
+						size_t buf_size = sizeof(char) * (current_token.length() + 1);
+						char* token_cstr = (char*) malloc(buf_size);
+						strcpy(token_cstr, current_token.c_str());
+						token_list.push_back(token_cstr);
+						current_token.clear();
+					}
+					if (c == '#') comment_mode = true;
+					if (c == '"') {
+						string_mode = true;
+						current_token.push_back(c);
+					}
+				} else {
+					// Push into current token as it's not whitespace or any seperator
+					current_token.push_back(c);
 				}
 			}
-			// 读取换行
-			skip('\n');
-			// 将Instruct转换为字节数组保存
-			auto b = (uint8_t*) &i;
-			for (size_t i = 0; i < sizeof(Instruct); i++) {
-				instructs.push(b[i]);
-			}
+			prg++;
 		}
-		Program r;
-		r.instruct = (Instruct*) instructs.start;
-		r.size = instructs.size();
-		return r;
+
+		return token_list;
 	}
 	//-------------------------------------------------------------------------
-	// ● 报错！
+	// ● Token类型判断
+	//-------------------------------------------------------------------------
+	bool Assembler::is_string_literal(const char* s) {
+		if (strlen(s) < 2) return false;
+		return s[0] == '"' && s[strlen(s) - 1] == '"';
+	}
+
+	bool Assembler::is_number_literal(const char* s) {
+		char* _s = (char*) s;
+		if (strlen(s) > 2) {
+			if (s[0] == '0' && s[1] == 'x') {
+				// Hex
+				_s += 2;
+				while (*_s) {
+					char c = toupper(*_s);
+					if ((c < '0' or c > '9') and (c < 'A' or c > 'F')) return false;
+					_s ++;
+				}
+				return true;
+			}
+		}
+		// Digits
+		while (*_s) {
+			if (*_s < '0' or *_s > '9') return false;
+			_s ++;
+		}
+		return true;
+	}
+
+	bool Assembler::is_symbol_literal(const char* s) {
+		if (strlen(s) < 2) return false;
+		return s[0] == '[' && s[strlen(s) - 1] == ']';
+	}
+
+	bool Assembler::is_register_literal(const char* s) {
+		if (strlen(s) < 2) return false;
+		return s[0] == '$' && Assembler::is_number_literal(s + 1);
+	}
+	//-------------------------------------------------------------------------
+	// ● 报错
 	//-------------------------------------------------------------------------
 	void Assembler::error(const char* message) {
-		printf("Error: %s\nAssembly:\n", message);
-		const char* p = prg;
-		// find spp
-		// spp = start of printed program
-		while (p > original_prg && p[-1] != '\n') p--;
-		const char* spp = p;
-		if (p) {
-			while (!check(*p, "\n")) {
-				char c = *p++;
-				if (c == '\t') c = ' ';
-				putchar(c);
-			}
-			putchar('\n');
-		} else {
-			puts("(no source)");
-		}
-		// print the caret
-		int loc = prg - spp;
-		while (loc--) putchar(' ');
-		puts("^");
-		// exit gracefully
-		abort();
+		printf("Compile Error: %s\n", message);
+		exit(1);
 	}
 	//-------------------------------------------------------------------------
-	// ● 检查prg是不是跑飞了
+	// ● Token -> Useful Data
 	//-------------------------------------------------------------------------
-	void Assembler::ensure_prg() {
-		if (prg < original_prg) {
-			prg = NULL;
-			error("My caret disappeared while assembling. "
-				"Probably you are missing a newline at the end of your file.");
-		}
-	}
-	//-------------------------------------------------------------------------
-	// ● 是否为某些字符中的一个？
-	//   若c为零，则必然返回true，因为s是由零结尾的。
-	//-------------------------------------------------------------------------
-	bool Assembler::check(char c, const char* s) {
-		return strchr(s, (unsigned char) c) != NULL;
-	}
-	//-------------------------------------------------------------------------
-	// ● 跳过某一字符
-	//-------------------------------------------------------------------------
-	void Assembler::skip(char c) {
-		if (*prg != c) {
-			char msg[20];
-			switch (c) {
-			case '\n':
-				strcpy(msg, "expected newline");
-				break;
-			case ' ':
-				strcpy(msg, "expected space");
-				break;
-			default:
-				strcpy(msg, "expected '\a'");
-				*strchr(msg, '\a') = c;
-			}
-			error(msg);
-		}
-		prg++;
-	}
-	//-------------------------------------------------------------------------
-	// ● 跳过某些字符组成的串
-	//-------------------------------------------------------------------------
-	void Assembler::skip(const char* s, const char* error_msg) {
-		size_t len = strspn(prg, s);
-		if (!len) error(error_msg);
-		prg += len;
-	}
-	//-------------------------------------------------------------------------
-	// ● 跳过某些字符组成的串
-	//-------------------------------------------------------------------------
-	void Assembler::skip_if(const char* s) {
-		size_t len = strspn(prg, s);
-		if (len) prg += len;
-	}
-	//-------------------------------------------------------------------------
-	// ● 复制标签名称
-	//-------------------------------------------------------------------------
-	void Assembler::copy_tagname(char* buf) {
-		for (size_t i = 0; i < MAX_TAG_NAME_SIZE; i++) {
-			if (prg[i] == '\n') {
-				error("tag name contains newline");
-				return;
-			}
-			if (prg[i] == ']') {
-				memcpy(buf, prg, i);
-				buf[i] = 0;
-				prg += i + 1;
-				skip('\n');
-				return;
-			}
-		}
-		error("tag name too long");
-	}
-	//-------------------------------------------------------------------------
-	// ● 复制opcode
-	//-------------------------------------------------------------------------
-	void Assembler::copy_opcode(char* buf) {
-		for (size_t i = 0; i < 12; i++) {
-			if (check(prg[i], " \t\v\n")) {
-				memcpy(buf, prg, i);
-				buf[i] = 0;
-				prg += i;
-				return;
-			}
-		}
-		error("opcode too long");
-	}
-	//-------------------------------------------------------------------------
-	// ● 复制变量名称
-	//-------------------------------------------------------------------------
-	void Assembler::copy_varname(char* buf) {
-		skip_if("$ \t\v\n");
-		for (size_t i = 0; i < MAX_TAG_NAME_SIZE; i++) {
-			if (check(prg[i], "} \t\v\n")) {
-				memcpy(buf, prg, i);
-				buf[i] = 0;
-				prg += i;
-				return;
-			}
-		}
-		error("variable name too long");
-	}
-	//-------------------------------------------------------------------------
-	// ● opcode: char[] → enum InstructionOpcode
-	//-------------------------------------------------------------------------
-	enum InstructionOpcode Assembler::parse_opcode(const char* str) {
-		#define I(x, ta, tb) if (strcmp(str, #x) == 0) return x;
+	uint16_t Assembler::read_opcode(const char* s) {
+		#define I(op, a, b) \
+			if (strcasecmp(#op , s) == 0) { return op; }
 		#include "instructions.hpp"
-		// RAW data instruction (e.g. RAWD) with a virtual opcode 512
-		// This instruction takes in 10 bytes, exactly,
-		// in the format of RAWD 0xFFFF 0xFFFF 0xFFFF 0xFFFF 0xFFFF.
-		if (strcmp(str, "RAWD") == 0) return RAWD;
-
-		error("unidentified instruction");
-		return NOOP;
-	}
-	//-------------------------------------------------------------------------
-	// ● 读取参数
-	//-------------------------------------------------------------------------
-	void Assembler::read_parameters(Instruct* i) {
-		switch (i->opcode) {
-		#define TNUL 0
-		#define TIMM read_address()
-		#define TADD read_address()
-		#define TREG read_register()
-		#define I(x, ta, tb) case x: i->a = ta; i->b = tb; break;
-		#include "instructions.hpp"
-		// Data instruction
-		case RAWD: {
-			uint16_t bits[5];
-			bits[0] = read_immediate_u32() & 0xFFFF;
-			bits[1] = read_immediate_u32() & 0xFFFF;
-			bits[2] = read_immediate_u32() & 0xFFFF;
-			bits[3] = read_immediate_u32() & 0xFFFF;
-			bits[4] = read_immediate_u32() & 0xFFFF;
-
-			i->opcode = bits[0];
-			i->a = (bits[1] << 16) | bits[2];
-			i->b = (bits[3] << 16) | bits[4];
-			break;
-		}
-		}
-	}
-	//-------------------------------------------------------------------------
-	// ● 分配寄存器变量
-	//-------------------------------------------------------------------------
-	void Assembler::alloc_reg_var(const char* identifier, int length) {
-		// Skip $0 ~ $4
-		for (int i = 4; i < 100; i++) {
-			if (!RegVars[i]) {
-				bool found = true;
-				// Find one free, ensure the whole length is free
-				for (int j = 1; j < length; j++) if (RegVars[i + j]) {
-					found = false;
-					break;
-				}
-				// Found one free space, alloc and exit
-				if (found) {
-					RegVar* temp_var = new RegVar;
-					temp_var->identifier = new char[strlen(identifier + 1)];
-					temp_var->reg = i;
-					temp_var->length = length;
-					strcpy(temp_var->identifier, identifier);
-					for (int j = 0; j < length; j++) RegVars[i + j] = temp_var;
-					printf("Register variable $%s allocated from $%d to $%d.\n", identifier, i, i + length - 1);
-					return;
-				}
-			}
-		}
-		error("The registers are used up!");
-	}
-	//-------------------------------------------------------------------------
-	// ● 释放寄存器变量
-	//-------------------------------------------------------------------------
-	void Assembler::free_reg_var(const char* identifier) {
-		// Skip $0 ~ $4
-		for (int i = 4; i < 100; i++) {
-			if (RegVars[i] && RegVars[i]->identifier && strcmp(RegVars[i]->identifier, identifier) == 0) {
-				RegVar* temp_var = RegVars[i];
-				for (int j = 0; j < temp_var->length; j++) RegVars[i + j] = NULL;
-				free(temp_var);
-				printf("Register variable $%s released ($%d - $%d).\n", identifier, i, i + temp_var->length - 1);
-				return;
-			}
-		}
-		printf("Register variable with identifier %s not found.\n", identifier);
-		error("Attempt to free non-exist variable");
-	}
-	//-------------------------------------------------------------------------
-	// ● 读取立即数参数
-	//-------------------------------------------------------------------------
-	uint32_t Assembler::read_immediate_u32() {
-		skip_if(" \t\v");
-		if (!isdigit((unsigned char) *prg)) error("expected digit");
-		long long n;
-		char* end;
-		if (prg[0] == '0' && prg[1] == 'x') {
-			n = strtoll(prg + 2, &end, 16);
-		} else {
-			n = strtoll(prg, &end, 10);
-		}
-		if (n > UINT32_MAX) error("immediate number too large");
-		if (n < 0) error("immediate number can't be negative");
-		prg = (const char*) end;
-		return n;
-	}
-	//-------------------------------------------------------------------------
-	// ● 读取地址参数
-	//-------------------------------------------------------------------------
-	uint32_t Assembler::read_address() {
-		skip_if(" \t\v");
-		return prg[0] == '[' ? read_address_tag() : read_immediate_u32();
-	}
-	//-------------------------------------------------------------------------
-	// ● 读取标签参数
-	//-------------------------------------------------------------------------
-	uint32_t Assembler::read_address_tag() {
-		skip('[');
-		char name[MAX_TAG_NAME_SIZE];
-		for (size_t i = 0; i < MAX_TAG_NAME_SIZE + 1; i++) if (prg[i] == ']') {
-			memcpy(name, prg, i);
-			name[i] = 0;
-			prg += i + 1;
-			for (size_t i = 0; i < tags.size(); i++) {
-				if (strcmp(name, tags[i].name) == 0) {
-					return tags[i].pointer;
-				}
-			}
-			printf("* Note: tag name = %s\n", name);
-			error("tag name not found");
-			return 0;
-		}
-		error("tag name too long");
 		return 0;
 	}
+	
 	//-------------------------------------------------------------------------
-	// ● 读取寄存器参数
-	//   返回寄存器编号。
+	// ● 编译
 	//-------------------------------------------------------------------------
-	uint32_t Assembler::read_register() {
-		skip_if(" \t\v");
-		skip_if("$");
-		int reg = 0;
-		if (!isdigit((unsigned char) *prg)) {
-			// Reading a variable tag here
-			char identifier[MAX_TAG_NAME_SIZE];
-			prg--;
-			copy_varname(identifier);
-			bool found = false;
-			for (int i = 4; i < 100; i++) if (RegVars[i] && RegVars[i]->identifier && strcmp(RegVars[i]->identifier, identifier) == 0) {
-				found = true;
-				reg = RegVars[i]->reg;
-				break;
+	Program Assembler::assemble() {
+		std::vector<char*> token_list = Assembler::tokenize(original_prg);
+		int token_list_length = token_list.size();
+		
+		uint8_t* output = (uint8_t*) malloc(0xFF);
+		int output_capacity = 0xFF;
+		int output_size = 0;
+		
+		int current_state = Inactive;
+
+		#define CHECK_EXPAND(s) \
+			output_size += s; \
+			if (s < 0) error("Can't expand negative size."); \
+			if (output_size > output_capacity) { \
+				output_capacity = 1; \
+				while (output_capacity < output_size) output_capacity *= 2; \
+				(void)realloc((void*) output, output_capacity * sizeof(uint8_t)); \
 			}
-			if (!found) {
-				printf("Register variable with identifier %s not found.\n", identifier);
-				error("Identifier not found");
+
+		const char* empty_token = "\0";
+
+		for (int index = 0; index <= token_list_length; index++) {
+			char* token;
+			if (index == token_list_length) {
+				if (current_state == Inactive) break;
+				printf("Reached end. Append empty token.\n");
+				token = (char*) empty_token;
+			} else {
+				token = token_list[index];
 			}
-		} else {
-			// Reading direct register value
-			reg = atoi(prg);
+			
+			if (current_state == Inactive) {
+				// Special handling for Emit Data & Tag Declare
+				if (strcasecmp(token, "RAWD") == 0 || strcasecmp(token, "FILL") == 0) {
+					current_state = EmitData;
+					printf("Start emitting data\n");
+				} else if (is_symbol_literal(token)) {
+					printf("Symbol %s declared at 0x%x\n", token, output_size);
+				} else {
+					uint16_t opcode = Assembler::read_opcode(token);
+					uint32_t output_ptr = output_size;
+					printf("0x%x : %s<%x>", output_size, token, opcode);
+					#define TNUL
+					#define TIMM \
+						CHECK_EXPAND(sizeof(uint32_t)) \
+						index++; if (index >= token_list_length) error("Unexpected EOF"); \
+						printf(" %s ", token_list[index]);
+					#define TADD \
+						CHECK_EXPAND(sizeof(uint32_t)) \
+						index++; if (index >= token_list_length) error("Unexpected EOF"); \
+						printf(" %s ", token_list[index]);
+					#define TREG \
+						CHECK_EXPAND(sizeof(uint32_t)) \
+						index++; if (index >= token_list_length) error("Unexpected EOF"); \
+						printf(" %s ", token_list[index]);
+					#define I(op, Ta, Tb) \
+						case op: \
+							CHECK_EXPAND(sizeof(uint16_t)) \
+							*((uint16_t*) (output + output_ptr)) = op; \
+							Ta \
+							Tb \
+							break;
+
+					switch(opcode){
+						#include "instructions.hpp"
+						default:
+							printf("Can't under stand token %s", token);
+					}
+					printf("\n");
+				}
+			} else if (current_state == EmitData) {
+				// If receiving Hex/Digits or String, fill the output
+				// If receiving other things, return to normal state
+				bool is_num = is_number_literal(token);
+				if (is_num || is_string_literal(token)) {
+					int output_ptr = output_size;
+					printf("0x%x : %s\n", output_ptr, token);
+					if (is_num) {
+						// Assume all hex are two bytes
+						// Assume all dec digits are uint32_t
+						if (strlen(token) > 2 && token[1] == 'x') {
+							CHECK_EXPAND(2)
+							*((uint16_t*) (output + output_ptr)) = std::stoi(token, nullptr, 0);
+						} else {
+							CHECK_EXPAND(4)
+							*((uint32_t*) (output + output_ptr)) = std::stoi(token, nullptr, 0);
+						}
+					} else {
+						CHECK_EXPAND(strlen(token) - 2)
+						for (uint32_t i = 1; i < strlen(token) - 1; i++) {
+							*((char*) (output + output_ptr + i - 1)) = token[i];
+						}
+					}
+				} else {
+					current_state = Inactive;
+					index --; // Rewind one token
+					printf("Token %s is not data. End emitting data\n", token);
+				}
+			} else {
+				error("Compiler can't be in a WTF emit state");
+			}
 		}
-		if (reg < 0) error("register no. can't be negative");
-		if ((size_t) reg > VM::REGISTER_COUNT) error("register no. too large");
-		while (isdigit((unsigned char) *prg)) prg++;
-		return reg;
+
+		// Clean memory
+		for (char* token : token_list) {
+			free(token);
+		}
+		token_list.clear();
+
+		Instruct* output_raw = (Instruct*) malloc(output_size * sizeof(uint8_t));
+		memcpy(output_raw, output, output_size * sizeof(uint8_t));
+
+		printf("Compile ends. Program size: 0x%x\n", output_size);
+
+		Program p = {
+			.size = output_size * sizeof(uint8_t),
+			.instruct = (Instruct*) output_raw
+		};
+		return p;
 	}
 }

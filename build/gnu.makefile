@@ -9,7 +9,7 @@ include $(MAKE76_ROOT)/inc.makefile
 include $(MAKE76_ROOT)/routine.makefile
 
 LDFLAGS += -shared -flto=thin
-CXXFLAGS += -I.. -fPIC -Ofast
+CXXFLAGS += -I.. -fPIC -Og -g
 
 test: VMtest.cxx $(TARGET)
 	$(CXX) -c VMtest.cxx -o VMtest.o $(CXXFLAGS)

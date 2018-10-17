@@ -21,7 +21,7 @@ int main(int argc, char** argv) {
 		char* src_file = argv[1];
 
 		char* src = NULL;
-		long file_size = slurp(src_file, &src);
+		size_t file_size = slurp(src_file, &src);
 		if (file_size < 0) {
 			perror("Src read failed");
 			return 1;
