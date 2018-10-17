@@ -144,7 +144,7 @@ namespace ASM76 {
 			if (output_size > output_capacity) { \
 				output_capacity = 1; \
 				while (output_capacity < output_size) output_capacity *= 2; \
-				(void)realloc((void*) output, output_capacity * sizeof(uint8_t)); \
+				output = (uint8_t*) realloc((void*) output, output_capacity * sizeof(uint8_t)); \
 			}
 
 		const char* empty_token = "\0";
@@ -202,7 +202,7 @@ namespace ASM76 {
 				// If receiving Hex/Digits or String, fill the output
 				// If receiving other things, return to normal state
 				bool is_num = is_number_literal(token);
-				if (is_num || is_string_literal(token)) {
+				if (token != empty_token && (is_num || is_string_literal(token))) {
 					int output_ptr = output_size;
 					printf("0x%x : %s\n", output_ptr, token);
 					if (is_num) {
@@ -216,10 +216,14 @@ namespace ASM76 {
 							*((uint32_t*) (output + output_ptr)) = std::stoi(token, nullptr, 0);
 						}
 					} else {
-						CHECK_EXPAND(strlen(token) - 2)
-						for (uint32_t i = 1; i < strlen(token) - 1; i++) {
+						size_t new_size = strlen(token) - 1;
+						CHECK_EXPAND(new_size)
+						for (uint32_t i = 1; i < new_size; i++) {
 							*((char*) (output + output_ptr + i - 1)) = token[i];
 						}
+						// Append 0
+						*((char*) (output + output_ptr + new_size - 1)) = '\0';
+						printf("%s\n", (char*) (output + output_ptr));
 					}
 				} else {
 					current_state = Inactive;
@@ -237,14 +241,14 @@ namespace ASM76 {
 		}
 		token_list.clear();
 
-		Instruct* output_raw = (Instruct*) malloc(output_size * sizeof(uint8_t));
-		memcpy(output_raw, output, output_size * sizeof(uint8_t));
+		if (output_size < output_capacity)
+			output = (uint8_t*) realloc(output, output_size * sizeof(uint8_t));
 
 		printf("Compile ends. Program size: 0x%x\n", output_size);
 
 		Program p = {
 			.size = output_size * sizeof(uint8_t),
-			.instruct = (Instruct*) output_raw
+			.instruct = (Instruct*) output
 		};
 		return p;
 	}

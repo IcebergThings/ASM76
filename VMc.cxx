@@ -27,15 +27,18 @@ int main(int argc, char** argv) {
 			return 1;
 		}
 
-		printf("Compiling %s, src file size %ld:\n%s\n", src_file, file_size, src);
+		printf("Compiling %s, src file size %ld\n", src_file, file_size);
 
 		Assembler a(src);
 		a.scan();
 		Program p = a.assemble();
+		free(src);
 
-		char* obj_file = new char[strlen(src_file) + 4];
+		char* obj_file = new char[strlen(src_file) + 5]; // .obj + NULL
 		sprintf(obj_file, "%s.obj", src_file);
 		ObjectCode::write_file(obj_file, p);
+		delete[] obj_file;
+		free(p.instruct);
 	} else {
 		puts("VM compiler. VM/76 with BIOS version 'Still in Alpha'");
 		puts("Usage: $./VMc [src]");
