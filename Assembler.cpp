@@ -11,9 +11,7 @@ namespace ASM76 {
 	// ● 构造
 	//-------------------------------------------------------------------------
 	Assembler::Assembler(const char* program) {
-		prg = original_prg = program;
-
-		memset(RegVars, 0x0, sizeof(RegVars));
+		original_prg = program;
 	}
 	//-------------------------------------------------------------------------
 	// ● Tokenize
@@ -112,7 +110,7 @@ namespace ASM76 {
 	// ● 报错
 	//-------------------------------------------------------------------------
 	void Assembler::error(const char* message) {
-		printf("Compile Error: %s\n", message);
+		printf("\n-------------------\nCompile Error: %s\n", message);
 		exit(1);
 	}
 	//-------------------------------------------------------------------------
@@ -122,9 +120,33 @@ namespace ASM76 {
 		#define I(op, a, b) \
 			if (strcasecmp(#op , s) == 0) { return op; }
 		#include "instructions.hpp"
+		error("Expecting opcode");
 		return 0;
 	}
 	
+	uint32_t Assembler::read_imm32(const char* s) {
+		if (!(Assembler::is_symbol_literal(s) || Assembler::is_number_literal(s))) error("Expecting immediate/symbol");
+		if (strlen(s) > 2 && s[0] == '[') return 0x00;
+		return stoi(s, nullptr, 0);
+	}
+	
+	uint32_t Assembler::read_reg(const char* s) {
+		if (!Assembler::is_register_literal(s)) error("Expecting register");
+		if (strlen(s) > 1) return stoi(s + 1);
+		return 0;
+	}
+	//-------------------------------------------------------------------------
+	// ● 测试准备符号表
+	//-------------------------------------------------------------------------
+	void Assembler::prepare_symbol(const char* s, uint32_t ptr) {
+		if (is_symbol_literal(s)) {
+			SymbolPlaceHolder sym = {
+				.identifier = s,
+				.ptr = ptr
+			};
+			unlinked_symbol.push_back(sym);
+		}
+	}
 	//-------------------------------------------------------------------------
 	// ● 编译
 	//-------------------------------------------------------------------------
@@ -165,28 +187,39 @@ namespace ASM76 {
 					current_state = EmitData;
 					printf("Start emitting data\n");
 				} else if (is_symbol_literal(token)) {
+					symbol_table[token] = output_size;
 					printf("Symbol %s declared at 0x%x\n", token, output_size);
 				} else {
-					uint16_t opcode = Assembler::read_opcode(token);
 					uint32_t output_ptr = output_size;
-					printf("0x%x : %s<%x>", output_size, token, opcode);
-					#define TNUL
+					printf("0x%x : %s", output_size, token);
+					uint16_t opcode = Assembler::read_opcode(token);
+					printf("<%x>", opcode);
+					#define TNUL CHECK_EXPAND(sizeof(uint32_t))
 					#define TIMM \
 						CHECK_EXPAND(sizeof(uint32_t)) \
 						index++; if (index >= token_list_length) error("Unexpected EOF"); \
+						*((uint32_t*) (output + output_ptr)) = read_imm32(token_list[index]); \
+						prepare_symbol(token_list[index], output_ptr); \
+						output_ptr += 4; \
 						printf(" %s ", token_list[index]);
 					#define TADD \
 						CHECK_EXPAND(sizeof(uint32_t)) \
 						index++; if (index >= token_list_length) error("Unexpected EOF"); \
+						*((uint32_t*) (output + output_ptr)) = read_imm32(token_list[index]); \
+						prepare_symbol(token_list[index], output_ptr); \
+						output_ptr += 4; \
 						printf(" %s ", token_list[index]);
 					#define TREG \
 						CHECK_EXPAND(sizeof(uint32_t)) \
 						index++; if (index >= token_list_length) error("Unexpected EOF"); \
+						*((uint32_t*) (output + output_ptr)) = read_reg(token_list[index]); \
+						output_ptr += 4; \
 						printf(" %s ", token_list[index]);
 					#define I(op, Ta, Tb) \
 						case op: \
 							CHECK_EXPAND(sizeof(uint16_t)) \
 							*((uint16_t*) (output + output_ptr)) = op; \
+							output_ptr += 2; \
 							Ta \
 							Tb \
 							break;
@@ -223,7 +256,6 @@ namespace ASM76 {
 						}
 						// Append 0
 						*((char*) (output + output_ptr + new_size - 1)) = '\0';
-						printf("%s\n", (char*) (output + output_ptr));
 					}
 				} else {
 					current_state = Inactive;
@@ -233,6 +265,12 @@ namespace ASM76 {
 			} else {
 				error("Compiler can't be in a WTF emit state");
 			}
+		}
+
+		// Link all Symbol place holders
+		for (auto sym : unlinked_symbol) {
+			printf("%s (%x) -> %x\n", sym.identifier, sym.ptr, symbol_table[sym.identifier]);
+			*((uint32_t*) (output + sym.ptr)) = symbol_table[sym.identifier];
 		}
 
 		// Clean memory

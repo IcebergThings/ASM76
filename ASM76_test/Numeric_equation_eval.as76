@@ -1,5 +1,6 @@
 # This is a Lispy numeric equation evaluator, as a experiment for the later full fledged Lisp/VM76 system
 
+INTX    0x1 0x0
 CALA    [Intialize]             # Intialize()
 DATI    $0 [Input_String]
 CALA    [Tokenize]              # Tokenize(input = [Input_String])
@@ -28,13 +29,13 @@ JMPA    [__Tokenize_loop_start]
 RETN
 
 [Memset]                        # Memset(void* start <$0>, uint32_t size <$4>, uint8_t data <$8>)
-MOVI    $12 $0
+MVRI    $12 $0
 ADDI    $12 $4                  # Endpoint = start + size -> $12
-MOVI    $16 $0                  # Counter  = start        -> $16
+MVRI    $16 $0                  # Counter  = start        -> $16
 [__Memset_loop_start]
 CMPI    $16 $12                 # Counter == Endpoint ?
 JIEA    [__Memset_loop_end]     # if (Counter == Endpoint) exit loop
-SLRB    $16 $8                  # *((uint8_t*) counter) = data
+SLBR    $16 $8                  # *((uint8_t*) counter) = data
 DATI    $20 0x1                 # 0x1 -> $20
 ADDI    $16 $20                 # Counter <$16> += 1
 JMPA    [__Memset_loop_start]   # While loop

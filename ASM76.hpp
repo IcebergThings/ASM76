@@ -11,6 +11,7 @@
 #include <mutex>
 #include <vector>
 #include <string>
+#include <unordered_map>
 using namespace std;
 
 #include "VLib/V.hpp"
@@ -55,28 +56,16 @@ namespace ASM76 {
 	// ● 汇编器
 	//-------------------------------------------------------------------------
 	class Assembler {
-	public:
-		struct Tag {
-			char* name;
-			uint32_t pointer;
-		};
-		static const size_t MAX_TAG_NAME_SIZE = 256;
-
-		struct RegVar {
-			char* identifier;
-			int reg;
-			int length;
-		};
 	private:
 		const char* original_prg;
-		const char* prg;
-		V::Vector<Tag> tags;
-		RegVar* RegVars[108];
 
 		struct SymbolPlaceHolder {
-			char* identifier;
-			uint32_t* ptr;
+			const char* identifier;
+			uint32_t ptr;
 		};
+
+		std::unordered_map<std::string, uint32_t> symbol_table = {};
+		std::vector<SymbolPlaceHolder> unlinked_symbol = {};
 
 		enum EmitState {
 			Inactive,
@@ -92,29 +81,14 @@ namespace ASM76 {
 		static bool is_symbol_literal(const char* s);
 		static bool is_register_literal(const char* s);
 		static uint16_t read_opcode(const char* s);
+		static uint32_t read_imm32(const char* s);
+		static uint32_t read_reg(const char* s);
 
 		void scan() {};
 		Program assemble();
 	private:
-		void error(const char* message);
-		void ensure_prg();
-		bool check(char c, const char* s);
-		void skip(char);
-		void skip(const char* s, const char* error_msg);
-		void skip_if(const char* s);
-		void copy_opcode(char* buf);
-		void copy_tagname(char* buf);
-		void copy_varname(char* buf);
-		enum InstructionOpcode parse_opcode(const char* str);
-		void read_parameters(Instruct* i);
-
-		void alloc_reg_var(const char* identifier, int size);
-		void free_reg_var(const char* identifier);
-
-		uint32_t read_immediate_u32();
-		uint32_t read_address();
-		uint32_t read_address_tag();
-		uint32_t read_register();
+		static void error(const char* message);
+		void prepare_symbol(const char* s, uint32_t ptr);
 	};
 	//-------------------------------------------------------------------------
 	// ● 反汇编器
