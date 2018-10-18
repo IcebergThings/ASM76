@@ -42,6 +42,46 @@ JMPA    [__Memset_loop_start]   # While loop
 [__Memset_loop_end]
 RETN
 
+[Memcpy]                        # Memcpy(void* dest <$0>, void* orig <$4>, uint32_t size <$8>)
+MVRI    $12 $0
+ADDI    $12 $8                  # Endpoint = start + size -> $12
+MVRI    $16 $0                  # CounterD = start        -> $16
+MVRI    $20 $4                  # CounterO = orig         -> $20
+[__Memcpy_loop_start]
+CMPI    $16 $12
+JIEA    [__Memset_loop_end]     # if (CounterD == Endpoint) exit loop
+MVPB    $20 $16                 # *CounterD = *CounterO
+DATI    $24 0x1
+ADDI    $16 $24                 # inc(CounterD)
+ADDI    $20 $24                 # inc(CounterO)
+[__Memset_loop_end]
+RETN
+
+[Malloc]                        # Malloc(uint32_t size <$0>)
+
+[Malloc_find_free_metablock]    # uint32_t <$0> Malloc_find_free_metablock()
+DATI    $0 0x0                  #
+DATI    $4 0x0                  # free_meta_block <$4> = 0;
+DATI    $8 0x100                #
+DATI    $12 0x0                 # index = 0; 
+[__MallocFFM_loop_start]        #
+CMPI    $8 $12                  #
+JIEA    [__MallocFFM_loop_end]  # while (index < 0x100) {
+MVRI    $16 $12                 #
+DATI    $20 0xC                 #
+MTPI    $16 $20                 #
+DATI    $20 [FREE_RAM_START]    #
+ADDI    $16 $20                 #     meta_base <$16> = index * sizeof(Meta) + FREE_RAM_START;
+MVRI    $0 $16
+DATI    $20 0x4                 #
+ADDI    $16 $20                 #     ptr <$16> = &(*meta_base.length);
+DATI    $20 0x0                 #
+CMPI    $24 $20                 #     if (*ptr == 0)
+JIEA    [__MallocFFM_loop_end]  #         return meta_base;
+JMPA    [__MallocFFM_loop_start]
+[__MallocFFM_loop_end]          # }
+RETN                            # return meta_base;
+
 [Intialize]                     # Intialize()
 DATI    $0 [FREE_RAM_START]
 DATI    $4 0xC00

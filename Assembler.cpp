@@ -227,7 +227,7 @@ namespace ASM76 {
 					switch(opcode){
 						#include "instructions.hpp"
 						default:
-							printf("Can't under stand token %s", token);
+							printf("Can't understand token %s", token);
 					}
 					printf("\n");
 				}
